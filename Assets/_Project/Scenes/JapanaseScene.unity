@@ -4129,6 +4129,14 @@ GameObject:
   - component: {fileID: 2053814096}
   - component: {fileID: 2053814099}
   - component: {fileID: 2053814098}
+  - component: {fileID: 2053814100}
+  - component: {fileID: 2053814107}
+  - component: {fileID: 2053814106}
+  - component: {fileID: 2053814105}
+  - component: {fileID: 2053814104}
+  - component: {fileID: 2053814103}
+  - component: {fileID: 2053814102}
+  - component: {fileID: 2053814101}
   m_Layer: 8
   m_Name: Emmi
   m_TagString: Player
@@ -4251,6 +4259,139 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 0
+--- !u!114 &2053814100
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2053814095}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 06a8c6eff8096554f86722ed8ba4abe1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _movement: {fileID: 2053814107}
+  _stamina: {fileID: 2053814106}
+  _weapon: {fileID: 2053814105}
+  _heal: {fileID: 2053814104}
+  _animator: {fileID: 2053814103}
+--- !u!114 &2053814101
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2053814095}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ee1035f5d68271d4b992a663827ad0fa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _camera: {fileID: 519420031}
+  _zoomInSize: 3.5
+  _zoomOutSize: 5
+  _zoomInSpeed: 6
+  _zoomOutSpeed: 4
+  _musicSource: {fileID: 0}
+  _healMusic: {fileID: 0}
+  _holdDuration: 1.2
+--- !u!114 &2053814102
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2053814095}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c9dd7a3009511d54598c8138549b4c2e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _maxHP: 100
+--- !u!114 &2053814103
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2053814095}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c33548903314dcf4e8f4d9aef93f072b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &2053814104
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2053814095}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dec09ce15bef60247b8ba07f118bdaeb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _maxCigarettes: 5
+  _healAmount: 35
+  _healDuration: 2
+  _healCooldown: 1.5
+  _health: {fileID: 2053814102}
+  _animator: {fileID: 2053814103}
+  _cinematic: {fileID: 2053814101}
+--- !u!114 &2053814105
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2053814095}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef05f4ba85a5f0c47bd51513dfa82de7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _revolverMaxAmmo: 5
+  _revolverReloadTime: 1.8
+  _beltMaxChargeTime: 2
+  _animator: {fileID: 2053814103}
+  _stamina: {fileID: 2053814106}
+--- !u!114 &2053814106
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2053814095}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d3dde8adc2ac934396f2a6792437784, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _maxStamina: 100
+  _regenRate: 8
+  _regenDelay: 1.2
+  _runCostPerSecond: 18
+  _kickCost: 22
+  _beltLightCost: 14
+  _beltHeavyRelease: 40
+--- !u!114 &2053814107
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2053814095}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0b40f8799b92bfe409227f454c708273, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _walkSpeed: 3.5
+  _runSpeed: 5.5
+  _dodgeDuration: 0.4
+  _dodgeCooldown: 0.8
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

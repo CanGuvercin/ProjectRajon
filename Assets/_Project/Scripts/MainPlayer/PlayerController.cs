@@ -104,21 +104,24 @@ public class PlayerController : MonoBehaviour
     // Hareket
     // -------------------------------------------------------------------------
     private void ReadMovementInput()
-    {
-        _moveInput = _input.Gameplay.Movement.ReadValue<Vector2>();
-        if (CanMove())
-            _movement.Move(_moveInput);
-    }
+{
+    _moveInput = _input.Gameplay.Movement.ReadValue<Vector2>();
+    if (CanMove())
+        _movement.Move(_moveInput);
 
-    private void HandleRun()
-    {
-        bool runPressed = _input.Gameplay.Run.IsPressed();
-        bool canRun     = runPressed && _moveInput != Vector2.zero && _stamina.HasStamina() && CanMove();
+    _animator.SetMoving(_movement.IsMoving);
+}
 
-        IsRunning = canRun;
-        _movement.SetRunning(IsRunning);
-        _stamina.SetConsuming(StaminaConsumer.Run, IsRunning);
-    }
+private void HandleRun()
+{
+    bool runPressed = _input.Gameplay.Run.IsPressed();
+    bool canRun     = runPressed && _moveInput != Vector2.zero && _stamina.HasStamina() && CanMove();
+
+    IsRunning = canRun;
+    _movement.SetRunning(IsRunning);
+    _stamina.SetConsuming(StaminaConsumer.Run, IsRunning);
+    _animator.SetRunning(IsRunning);
+}
 
     // -------------------------------------------------------------------------
     // Combat Callbacks

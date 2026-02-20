@@ -47,9 +47,15 @@ public class WeaponController : MonoBehaviour
     // Unity Lifecycle
     // -------------------------------------------------------------------------
     private void Awake()
-    {
-        _currentAmmo = _revolverMaxAmmo;
-    }
+{
+    _currentAmmo = _revolverMaxAmmo;
+    _currentWeapon = WeaponType.Revolver;
+}
+
+private void Start()
+{
+    _animator.SetWeaponType(_currentWeapon);
+}
 
     private void Update()
     {
