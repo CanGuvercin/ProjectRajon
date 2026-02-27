@@ -4,7 +4,8 @@ using UnityEngine;
 /// <summary>
 /// RAJON — EmmiMovement
 /// Sadece hareket matematiği ve dodge.
-/// PlayerController'dan çağrılır, başka hiçbir şeyden haberdar değildir.
+/// Dodge süresi timer ile değil, Animation Event ile biter.
+/// CrouchingNova animasyonunun son frame'ine EndDodge() event'i ekle.
 /// </summary>
 public class EmmiMovement : MonoBehaviour
 {
@@ -16,8 +17,7 @@ public class EmmiMovement : MonoBehaviour
     [SerializeField] private float _runSpeed  = 5.5f;
 
     [Header("Dodge")]
-    [SerializeField] private float _dodgeDuration  = 0.4f;  // eğilme süresi
-    [SerializeField] private float _dodgeCooldown  = 0.8f;  // bekleme süresi
+    [SerializeField] private float _dodgeCooldown = 0.8f;
 
     // -------------------------------------------------------------------------
     // İç Durum
@@ -25,6 +25,7 @@ public class EmmiMovement : MonoBehaviour
     private bool  _isRunning;
     private bool  _isDodging;
     private float _dodgeCooldownTimer;
+    private Action _dodgeCompleteCallback;
 
     private Rigidbody2D _rb;
 
@@ -43,17 +44,19 @@ public class EmmiMovement : MonoBehaviour
     }
 
     // -------------------------------------------------------------------------
-    // Hareket — PlayerController her Update'te çağırır
+    // Hareket
     // -------------------------------------------------------------------------
     public void Move(Vector2 input)
     {
-        if (_isDodging) return;
+        if (_isDodging)
+        {
+            _rb.velocity = Vector2.zero;
+            return;
+        }
 
         float speed      = _isRunning ? _runSpeed : _walkSpeed;
-        Vector2 velocity = input * speed;
-        _rb.velocity     = velocity;
+        _rb.velocity     = input * speed;
 
-        // Sprite yönü: sağa bakıyorsa normal, sola dönünce flip
         if (input.x != 0f)
             transform.localScale = new Vector3(Mathf.Sign(input.x), 1f, 1f);
     }
@@ -64,7 +67,7 @@ public class EmmiMovement : MonoBehaviour
     }
 
     // -------------------------------------------------------------------------
-    // Dodge — PlayerController callback ile çağırır, bitince haber verir
+    // Dodge Başlat — PlayerController çağırır
     // -------------------------------------------------------------------------
     public void Dodge(Action onComplete)
     {
@@ -74,19 +77,24 @@ public class EmmiMovement : MonoBehaviour
             return;
         }
 
-        StartCoroutine(DodgeRoutine(onComplete));
+        _isDodging             = true;
+        _dodgeCompleteCallback = onComplete;
+        _rb.velocity           = Vector2.zero;
+        _rb.constraints        = RigidbodyConstraints2D.FreezePosition 
+                               | RigidbodyConstraints2D.FreezeRotation;
     }
 
-    private System.Collections.IEnumerator DodgeRoutine(Action onComplete)
+    // -------------------------------------------------------------------------
+    // Dodge Bitir — CrouchingNova animasyonunun SON FRAME'ine
+    // Animation Event olarak ekle. Method adı: EndDodge
+    // -------------------------------------------------------------------------
+    public void EndDodge()
     {
-        _isDodging   = true;
-        _rb.velocity = Vector2.zero;
-
-        yield return new WaitForSeconds(_dodgeDuration);
-
+        _rb.constraints     = RigidbodyConstraints2D.FreezeRotation;
         _isDodging          = false;
         _dodgeCooldownTimer = _dodgeCooldown;
-        onComplete?.Invoke();
+        _dodgeCompleteCallback?.Invoke();
+        _dodgeCompleteCallback = null;
     }
 
     // -------------------------------------------------------------------------
@@ -94,5 +102,5 @@ public class EmmiMovement : MonoBehaviour
     // -------------------------------------------------------------------------
     public bool IsDodging         => _isDodging;
     public bool IsDodgeOnCooldown => _dodgeCooldownTimer > 0f;
-    public bool IsMoving => _rb.velocity.sqrMagnitude > 0.01f;
+    public bool IsMoving          => _rb.velocity.sqrMagnitude > 0.01f;
 }
