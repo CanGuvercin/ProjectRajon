@@ -18,7 +18,7 @@ public class StaminaSystem : MonoBehaviour
     [SerializeField] private float _regenDelay    = 1.2f; // son harcamadan sonra regenin başlaması için bekleme
 
     [Header("Tüketim Miktarları")]
-    [SerializeField] private float _runCostPerSecond  = 18f;
+    [SerializeField] private float _runCostPerSecond  = 18f; //
     [SerializeField] private float _kickCost          = 22f;
     [SerializeField] private float _beltLightCost     = 14f;
     [SerializeField] private float _beltHeavyRelease  = 40f; // şarj bırakılınca
