@@ -66,33 +66,24 @@ public class HealSystem : MonoBehaviour
     }
 
     private IEnumerator HealRoutine(Action onComplete)
-    {
-        _currentCigarettes--;
-        _cooldownTimer = _healCooldown;
-        OnCigarettesChanged?.Invoke(_currentCigarettes, _maxCigarettes);
-        OnHealStarted?.Invoke();
+{
+    _currentCigarettes--;
+    _cooldownTimer = _healCooldown;
+    OnCigarettesChanged?.Invoke(_currentCigarettes, _maxCigarettes);
+    OnHealStarted?.Invoke();
 
-        // Animasyon tetikle
-        _animator.SetHealing(true);
+    _animator.SetHealing(true);
+    _cinematic?.Play();
 
-        // Kamera zoom + müzik — HealCinematic yönetir
-        _cinematic?.Play();
+    yield return new WaitForSeconds(_healDuration);
 
-        // Dünya durur — Time.timeScale sıfırlamak yerine
-        // sadece Emmi'nin kendi sistemleri dondurulur (PlayerController guard'ları zaten engelliyor)
-        // HealCinematic kendi coroutine'inde zoom out yapacak
+    _health.Heal(_healAmount);
+    _animator.SetHealing(false);
+    // Stop() YOK — cinematic kendi bitiyor
 
-        yield return new WaitForSeconds(_healDuration);
-
-        // HP bas — yavaş yavaş değil, anlık (zoom sırasında zaten hissedilir)
-        _health.Heal(_healAmount);
-
-        _animator.SetHealing(false);
-        _cinematic?.Stop();
-
-        OnHealFinished?.Invoke();
-        onComplete?.Invoke();
-    }
+    OnHealFinished?.Invoke();
+    onComplete?.Invoke();
+}
 
     // -------------------------------------------------------------------------
     // Upgrade & Pickup — nargile noktası veya sahadan

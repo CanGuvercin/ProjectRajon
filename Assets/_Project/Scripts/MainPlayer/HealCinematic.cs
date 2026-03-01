@@ -1,104 +1,223 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 /// <summary>
 /// RAJON — HealCinematic
-/// Sigara yakma sırasındaki zoom ve müzik efekti.
-/// HealSystem çağırır. Kamera ve ses sistemlerini yönetir.
+/// Sigara yakma ritüeli: dünya solar, kamera zoom yapar, Emmi yalnız kalır.
+/// 
+/// Dünya karartma: SpriteRenderer ("Player" / "UI" tag hariç) + tüm Tilemap'ler solar.
+/// Time.timeScale dokunulmaz — IsHealing guard Emmi'yi korur.
 /// </summary>
 public class HealCinematic : MonoBehaviour
 {
     // -------------------------------------------------------------------------
-    // Ayarlar
+    // Kamera
     // -------------------------------------------------------------------------
-    [Header("Zoom")]
+    [Header("Kamera")]
     [SerializeField] private Camera _camera;
-    [SerializeField] private float  _zoomInSize   = 3.5f;   // yakınlaşınca orthographic size
-    [SerializeField] private float  _zoomOutSize  = 5.0f;   // normal kamera boyutu
-    [SerializeField] private float  _zoomInSpeed  = 6f;
+    [SerializeField] private float  _zoomInSize   = 3.0f;
+    [SerializeField] private float  _normalSize   = 5.0f;
+    [SerializeField] private float  _zoomInSpeed  = 8f;
     [SerializeField] private float  _zoomOutSpeed = 4f;
 
-    [Header("Müzik")]
-    [SerializeField] private AudioSource _musicSource;
-    [SerializeField] private AudioClip   _healMusic;        // Türk klasiği
+    // -------------------------------------------------------------------------
+    // Fade
+    // -------------------------------------------------------------------------
+    [Header("Fade")]
+    [SerializeField] private float _fadeDuration   = 0.3f;
+    [SerializeField] private float _fadeInDuration = 0.5f;
 
+    // -------------------------------------------------------------------------
+    // Animasyon Süresi
+    // -------------------------------------------------------------------------
     [Header("Süre")]
-    [SerializeField] private float _holdDuration = 1.2f;    // zoom'da bekleme süresi
+    [SerializeField] private float _smokingDuration = 1.333f; // Smoking_Emmi animasyon süresi
 
     // -------------------------------------------------------------------------
-    // İç Durum
+    // Müzik
     // -------------------------------------------------------------------------
-    private Coroutine _activeRoutine;
+    [Header("Müzik")]
+    [SerializeField] private AudioSource _audioSource;
+    [SerializeField] private AudioClip   _healClip;
 
     // -------------------------------------------------------------------------
-    // HealSystem tarafından çağrılır
+    // İç Durum — SpriteRenderer
+    // -------------------------------------------------------------------------
+    private List<SpriteRenderer>              _worldSprites  = new List<SpriteRenderer>();
+    private Dictionary<SpriteRenderer, float> _spriteAlphas  = new Dictionary<SpriteRenderer, float>();
+
+    // -------------------------------------------------------------------------
+    // İç Durum — Tilemap
+    // -------------------------------------------------------------------------
+    private List<Tilemap>              _worldTilemaps = new List<Tilemap>();
+    private Dictionary<Tilemap, float> _tilemapAlphas = new Dictionary<Tilemap, float>();
+
+    private Coroutine _routine;
+
+    // -------------------------------------------------------------------------
+    // HealSystem'dan çağrılır
     // -------------------------------------------------------------------------
     public void Play()
     {
-        if (_activeRoutine != null)
-            StopCoroutine(_activeRoutine);
-
-        _activeRoutine = StartCoroutine(CinematicRoutine());
+        if (_routine != null) StopCoroutine(_routine);
+        _routine = StartCoroutine(CinematicRoutine());
     }
 
     public void Stop()
     {
-        if (_activeRoutine != null)
-        {
-            StopCoroutine(_activeRoutine);
-            _activeRoutine = null;
-        }
-
-        // Müziği kapat, kamerayı sıfırla
-        if (_musicSource != null && _musicSource.isPlaying)
-            _musicSource.Stop();
-
-        if (_camera != null)
-            _camera.orthographicSize = _zoomOutSize;
+        if (_routine != null) { StopCoroutine(_routine); _routine = null; }
+        RestoreWorld();
+        if (_camera) _camera.orthographicSize = _normalSize;
+        if (_audioSource && _audioSource.isPlaying) _audioSource.Stop();
     }
 
     // -------------------------------------------------------------------------
-    // Sinematik Döngü
+    // Ana Ritüel
     // -------------------------------------------------------------------------
     private IEnumerator CinematicRoutine()
     {
-        // Müzik başlat
-        if (_musicSource != null && _healMusic != null)
+        CollectWorldObjects();
+
+        if (_audioSource && _healClip)
         {
-            _musicSource.clip = _healMusic;
-            _musicSource.Play();
+            _audioSource.clip = _healClip;
+            _audioSource.Play();
         }
 
-        // Zoom in
+        // Dünya solar + zoom in (paralel)
+        StartCoroutine(FadeWorld(0f, _fadeDuration));
         yield return StartCoroutine(ZoomTo(_zoomInSize, _zoomInSpeed));
 
-        // Bekle
-        yield return new WaitForSeconds(_holdDuration);
+        // Emmi sigara animasyonu bekle
+        yield return new WaitForSeconds(_smokingDuration);
 
-        // Zoom out
-        yield return StartCoroutine(ZoomTo(_zoomOutSize, _zoomOutSpeed));
+        // Dünya geri + zoom out (paralel)
+        StartCoroutine(FadeWorld(1f, _fadeInDuration));
+        yield return StartCoroutine(ZoomTo(_normalSize, _zoomOutSpeed));
 
-        // Müzik kapat
-        if (_musicSource != null)
-            _musicSource.Stop();
+        if (_audioSource && _audioSource.isPlaying) _audioSource.Stop();
 
-        _activeRoutine = null;
+        _routine = null;
     }
 
-    private IEnumerator ZoomTo(float targetSize, float speed)
+    // -------------------------------------------------------------------------
+    // Sahne Objelerini Topla
+    // -------------------------------------------------------------------------
+    private void CollectWorldObjects()
     {
-        if (_camera == null) yield break;
+        _worldSprites.Clear();
+        _spriteAlphas.Clear();
+        _worldTilemaps.Clear();
+        _tilemapAlphas.Clear();
 
-        while (!Mathf.Approximately(_camera.orthographicSize, targetSize))
+        foreach (var sr in FindObjectsOfType<SpriteRenderer>())
         {
-            _camera.orthographicSize = Mathf.MoveTowards(
-                _camera.orthographicSize,
-                targetSize,
-                speed * Time.deltaTime
-            );
+            if (sr.CompareTag("Player") || sr.CompareTag("UI")) continue;
+            _worldSprites.Add(sr);
+            _spriteAlphas[sr] = sr.color.a;
+        }
+
+        foreach (var tm in FindObjectsOfType<Tilemap>())
+        {
+            _worldTilemaps.Add(tm);
+            _tilemapAlphas[tm] = tm.color.a;
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Fade (0 = solar, 1 = geri gel)
+    // -------------------------------------------------------------------------
+    private IEnumerator FadeWorld(float targetAlpha, float duration)
+    {
+        // Başlangıç değerlerini snapshot al
+        var spriteStart  = new Dictionary<SpriteRenderer, float>();
+        var tilemapStart = new Dictionary<Tilemap, float>();
+
+        foreach (var sr in _worldSprites)
+            if (sr) spriteStart[sr] = sr.color.a;
+
+        foreach (var tm in _worldTilemaps)
+            if (tm) tilemapStart[tm] = tm.color.a;
+
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+            float e = targetAlpha == 0f ? EaseOutQuart(t) : EaseInQuart(t);
+
+            foreach (var sr in _worldSprites)
+            {
+                if (!sr) continue;
+                Color c = sr.color;
+                c.a = Mathf.Lerp(spriteStart[sr], targetAlpha, e);
+                sr.color = c;
+            }
+
+            foreach (var tm in _worldTilemaps)
+            {
+                if (!tm) continue;
+                Color c = tm.color;
+                c.a = Mathf.Lerp(tilemapStart[tm], targetAlpha, e);
+                tm.color = c;
+            }
+
             yield return null;
         }
 
-        _camera.orthographicSize = targetSize;
+        // Kesin değer
+        foreach (var sr in _worldSprites)
+        {
+            if (!sr) continue;
+            Color c = sr.color; c.a = targetAlpha; sr.color = c;
+        }
+        foreach (var tm in _worldTilemaps)
+        {
+            if (!tm) continue;
+            Color c = tm.color; c.a = targetAlpha; tm.color = c;
+        }
     }
+
+    // -------------------------------------------------------------------------
+    // Acil Restore (Stop çağrılırsa)
+    // -------------------------------------------------------------------------
+    private void RestoreWorld()
+    {
+        foreach (var pair in _spriteAlphas)
+        {
+            if (!pair.Key) continue;
+            Color c = pair.Key.color; c.a = pair.Value; pair.Key.color = c;
+        }
+        foreach (var pair in _tilemapAlphas)
+        {
+            if (!pair.Key) continue;
+            Color c = pair.Key.color; c.a = pair.Value; pair.Key.color = c;
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Zoom
+    // -------------------------------------------------------------------------
+    private IEnumerator ZoomTo(float target, float speed)
+    {
+        if (_camera == null) yield break;
+
+        while (!Mathf.Approximately(_camera.orthographicSize, target))
+        {
+            _camera.orthographicSize = Mathf.MoveTowards(
+                _camera.orthographicSize, target, speed * Time.deltaTime);
+            yield return null;
+        }
+
+        _camera.orthographicSize = target;
+    }
+
+    // -------------------------------------------------------------------------
+    // Easing
+    // -------------------------------------------------------------------------
+    private static float EaseOutQuart(float t) => 1f - Mathf.Pow(1f - t, 4f);
+    private static float EaseInQuart(float t)  => t * t * t * t;
 }
