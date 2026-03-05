@@ -42,3 +42,6 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
+  - name: SpriteRenderer
+    uniqueID: 3219172459
+    locked: 0

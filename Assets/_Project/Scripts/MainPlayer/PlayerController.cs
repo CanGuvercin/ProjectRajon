@@ -4,7 +4,6 @@ using UnityEngine.InputSystem;
 /// <summary>
 /// RAJON — PlayerController
 /// Koordinatör. Input okur, state tutar, atomik sistemlere delege eder.
-/// Kural: Hiçbir method 15 satırı geçmez. Geçiyorsa yanlış yerde.
 /// </summary>
 public class PlayerController : MonoBehaviour
 {
@@ -14,6 +13,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private WeaponController _weapon;
     [SerializeField] private HealSystem       _heal;
     [SerializeField] private EmmiAnimator     _animator;
+    [SerializeField] private InteractionSystem _interaction;
 
     public bool IsRunning   { get; private set; }
     public bool IsDodging   { get; private set; }
@@ -21,13 +21,13 @@ public class PlayerController : MonoBehaviour
     public bool IsHealing   { get; private set; }
     public bool IsDead      { get; private set; }
     public bool IsReloading { get; private set; }
+    public bool IsPickingUp { get; private set; }
 
     private RajonInputActions _input;
     private Vector2           _moveInput;
-
-    private bool        _runHeld      = false;
-    private float       _runStopTimer = 0f;
-    private const float RunStopDelay  = 0.08f;
+    private bool              _runHeld      = false;
+    private float             _runStopTimer = 0f;
+    private const float       RunStopDelay  = 0.08f;
 
     private void Awake()  => _input = new RajonInputActions();
 
@@ -118,8 +118,7 @@ public class PlayerController : MonoBehaviour
         else
         {
             _runStopTimer -= Time.deltaTime;
-            if (_runStopTimer <= 0f)
-                IsRunning = false;
+            if (_runStopTimer <= 0f) IsRunning = false;
         }
 
         _movement.SetRunning(IsRunning);
@@ -172,8 +171,32 @@ public class PlayerController : MonoBehaviour
         _heal.UseHeal(() => IsHealing = false);
     }
 
-    private void OnInteract(InputAction.CallbackContext ctx) { /* TODO */ }
-    private void OnZippo(InputAction.CallbackContext ctx)    { /* TODO */ }
+    private void OnInteract(InputAction.CallbackContext ctx)
+    {
+        if (!CanAct() || IsPickingUp) return;
+
+        if (_interaction == null) return;
+        var target = _interaction.CurrentTarget;
+        if (target == null) return;
+
+        if (target.GetInteractionType() == InteractionType.Pickup)
+        {
+            IsPickingUp = true;
+            _animator.PlayPickup();
+            // Pickup animasyonu kısa — 0.4s sonra tamamlandı say
+            // İleride Animation Event ile de bağlanabilir
+            target.Interact(this);
+            Invoke(nameof(EndPickup), 0.4f);
+        }
+        else
+        {
+            target.Interact(this);
+        }
+    }
+
+    private void EndPickup() => IsPickingUp = false;
+
+    private void OnZippo(InputAction.CallbackContext ctx) { /* TODO */ }
 
     private void OnDodge(InputAction.CallbackContext ctx)
     {
