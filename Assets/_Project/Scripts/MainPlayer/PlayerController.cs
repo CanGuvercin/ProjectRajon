@@ -173,11 +173,13 @@ public class PlayerController : MonoBehaviour
 
     private void OnInteract(InputAction.CallbackContext ctx)
     {
-        if (!CanAct() || IsPickingUp) return;
-
-        if (_interaction == null) return;
-        var target = _interaction.CurrentTarget;
-        if (target == null) return;
+         Debug.Log("E basıldı");
+    if (!CanAct() || IsPickingUp) { Debug.Log("CanAct false veya IsPickingUp"); return; }
+    if (_interaction == null) { Debug.Log("InteractionSystem null"); return; }
+    
+    var target = _interaction.CurrentTarget;
+    Debug.Log($"CurrentTarget: {target}");
+    if (target == null) return;
 
         if (target.GetInteractionType() == InteractionType.Pickup)
         {
@@ -186,7 +188,7 @@ public class PlayerController : MonoBehaviour
             // Pickup animasyonu kısa — 0.4s sonra tamamlandı say
             // İleride Animation Event ile de bağlanabilir
             target.Interact(this);
-            Invoke(nameof(EndPickup), 0.4f);
+            Invoke(nameof(EndPickup), 0.667f);
         }
         else
         {
@@ -210,7 +212,7 @@ public class PlayerController : MonoBehaviour
         });
     }
 
-    private bool CanMove()   => !IsDead && !IsHealing && !IsDodging;
+    private bool CanMove()   => !IsDead && !IsHealing && !IsDodging && !IsPickingUp;
     private bool CanAttack() => !IsDead && !IsHealing && !IsReloading && !IsDodging;
     private bool CanAct()    => !IsDead && !IsHealing;
 
