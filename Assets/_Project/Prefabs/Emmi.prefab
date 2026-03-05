@@ -290,9 +290,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 68361bdc188bac4439aa545fdd88e3f1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _pickupRadius: 1.4
-  _interactionRadius: 1
-  _centerOffset: {x: 0, y: 0.5}
+  _pickupRadius: 1.45
+  _interactionRadius: 1.1
+  _centerOffset: {x: 0, y: 1}
   _interactableLayer:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 512

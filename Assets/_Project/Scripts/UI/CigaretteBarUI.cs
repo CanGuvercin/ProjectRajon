@@ -19,9 +19,14 @@ public class CigaretteBarUI : MonoBehaviour
     [SerializeField] private float _riseDuration        = 0.45f;
     [SerializeField] private float _returnDuration      = 0.2f;
 
+    [Header("Pickup Drop")]
+    [SerializeField] private float _dropOffsetY  = 40f;
+    [SerializeField] private float _dropDuration = 0.25f;
+
     private RectTransform _rt;
     private int           _currentCount;
     private Vector2[]     _slotHomePositions;
+    private bool          _returnListenerRegistered = false; // birikme önleme
 
     private void Awake()
     {
@@ -53,6 +58,13 @@ public class CigaretteBarUI : MonoBehaviour
         if (_healSystem == null) return;
         _healSystem.OnHealStarted       -= OnHealStarted;
         _healSystem.OnCigarettesChanged -= OnCigarettesChanged;
+
+        // Disable sırasında da temizle
+        if (_returnListenerRegistered)
+        {
+            _healSystem.OnHealFinished -= ReturnToDefault;
+            _returnListenerRegistered = false;
+        }
     }
 
     private void OnHealStarted()
@@ -68,7 +80,6 @@ public class CigaretteBarUI : MonoBehaviour
             StartCoroutine(PickupSequence(current));
     }
 
-    // Aktif olan en sağdaki slotu bul — index math'e güvenme
     private int GetExitSlotIndex()
     {
         for (int i = _slots.Length - 1; i >= 0; i--)
@@ -84,33 +95,47 @@ public class CigaretteBarUI : MonoBehaviour
         StartCoroutine(ExitCigarette(exitIndex));
         yield return StartCoroutine(MovePacket(_openPos, _riseDuration));
 
+        // Önceki listener varsa önce temizle — birikme önleme
+        if (_returnListenerRegistered)
+        {
+            _healSystem.OnHealFinished -= ReturnToDefault;
+            _returnListenerRegistered = false;
+        }
+
         _healSystem.OnHealFinished += ReturnToDefault;
+        _returnListenerRegistered = true;
     }
 
     private IEnumerator PickupSequence(int newCount)
     {
         yield return StartCoroutine(MovePacket(_openPos, _riseDuration));
 
-        int fillIndex = newCount - 1;
-        if (fillIndex >= 0 && fillIndex < _slots.Length)
+        for (int i = 0; i < newCount && i < _slots.Length; i++)
         {
-            var slot = _slots[fillIndex];
-            slot.anchoredPosition = _slotHomePositions[fillIndex];
-            var img = slot.GetComponent<Image>();
-            if (img)
-            {
-                slot.gameObject.SetActive(true);
-                yield return StartCoroutine(FadeSlot(img, 0f, 1f, 0.3f, easeIn: true));
-            }
+            if (_slots[i].gameObject.activeSelf) continue;
+
+            var slot = _slots[i];
+            var img  = slot.GetComponent<Image>();
+            if (img == null) continue;
+
+            Vector2 endPos   = _slotHomePositions[i];
+            Vector2 startPos = endPos + Vector2.up * _dropOffsetY;
+
+            slot.anchoredPosition = startPos;
+            img.color = new Color(1f, 1f, 1f, 0f);
+            slot.gameObject.SetActive(true);
+
+            yield return StartCoroutine(DropSlot(slot, img, startPos, endPos, _dropDuration));
         }
 
-        yield return new WaitForSeconds(0.2f);
+        yield return new WaitForSeconds(0.15f);
         yield return StartCoroutine(MovePacket(_defaultPos, _returnDuration));
     }
 
     private void ReturnToDefault()
     {
         _healSystem.OnHealFinished -= ReturnToDefault;
+        _returnListenerRegistered = false;
         StartCoroutine(MovePacket(_defaultPos, _returnDuration));
     }
 
@@ -161,21 +186,20 @@ public class CigaretteBarUI : MonoBehaviour
         img.color = Color.white;
     }
 
-    private IEnumerator FadeSlot(Image img, float from, float to, float duration, bool easeIn)
+    private IEnumerator DropSlot(RectTransform rt, Image img, Vector2 from, Vector2 to, float duration)
     {
         float elapsed = 0f;
-        img.color = new Color(1f, 1f, 1f, from);
-
         while (elapsed < duration)
         {
             elapsed += Time.unscaledDeltaTime;
             float t = Mathf.Clamp01(elapsed / duration);
-            float e = easeIn ? EaseInQuart(t) : EaseOutQuart(t);
-            img.color = new Color(1f, 1f, 1f, Mathf.Lerp(from, to, e));
+            float e = EaseOutQuart(t);
+            rt.anchoredPosition = Vector2.Lerp(from, to, e);
+            img.color = new Color(1f, 1f, 1f, e);
             yield return null;
         }
-
-        img.color = new Color(1f, 1f, 1f, to);
+        rt.anchoredPosition = to;
+        img.color = Color.white;
     }
 
     private void RefreshSlots()

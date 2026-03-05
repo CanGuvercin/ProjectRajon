@@ -8,12 +8,13 @@ using UnityEngine.InputSystem;
 public class PlayerController : MonoBehaviour
 {
     [Header("Sistemler")]
-    [SerializeField] private EmmiMovement     _movement;
-    [SerializeField] private StaminaSystem    _stamina;
-    [SerializeField] private WeaponController _weapon;
-    [SerializeField] private HealSystem       _heal;
-    [SerializeField] private EmmiAnimator     _animator;
+    [SerializeField] private EmmiMovement      _movement;
+    [SerializeField] private StaminaSystem     _stamina;
+    [SerializeField] private WeaponController  _weapon;
+    [SerializeField] private HealSystem        _heal;
+    [SerializeField] private EmmiAnimator      _animator;
     [SerializeField] private InteractionSystem _interaction;
+    [SerializeField] private HealCinematic     _cinematic;
 
     public bool IsRunning   { get; private set; }
     public bool IsDodging   { get; private set; }
@@ -29,7 +30,7 @@ public class PlayerController : MonoBehaviour
     private float             _runStopTimer = 0f;
     private const float       RunStopDelay  = 0.08f;
 
-    private void Awake()  => _input = new RajonInputActions();
+    private void Awake() => _input = new RajonInputActions();
 
     private void OnEnable()
     {
@@ -51,19 +52,17 @@ public class PlayerController : MonoBehaviour
 
     private void RegisterInputCallbacks()
     {
-        _input.Gameplay.LightAttack.performed  += OnLightAttack;
-        _input.Gameplay.HeavyAttack.performed  += OnHeavyAttack;
-        _input.Gameplay.HeavyAttack.canceled   += OnHeavyAttackReleased;
-        _input.Gameplay.Reload.performed       += OnReload;
-        _input.Gameplay.ThrowPickup.performed  += OnThrowPickup;
-        _input.Gameplay.Crouching.performed    += OnDodge;
-        _input.Gameplay.Heal.performed         += OnHeal;
-        _input.Gameplay.Interaction.performed  += OnInteract;
-        _input.Gameplay.Zippo.performed        += OnZippo;
-
-        _input.Gameplay.Run.started  += OnRunStarted;
-        _input.Gameplay.Run.canceled += OnRunCanceled;
-
+        _input.Gameplay.LightAttack.performed    += OnLightAttack;
+        _input.Gameplay.HeavyAttack.performed    += OnHeavyAttack;
+        _input.Gameplay.HeavyAttack.canceled     += OnHeavyAttackReleased;
+        _input.Gameplay.Reload.performed         += OnReload;
+        _input.Gameplay.ThrowPickup.performed    += OnThrowPickup;
+        _input.Gameplay.Crouching.performed      += OnDodge;
+        _input.Gameplay.Heal.performed           += OnHeal;
+        _input.Gameplay.Interaction.performed    += OnInteract;
+        _input.Gameplay.Zippo.performed          += OnZippo;
+        _input.Gameplay.Run.started              += OnRunStarted;
+        _input.Gameplay.Run.canceled             += OnRunCanceled;
         _input.Gameplay.RevolverButton.performed += OnRevolverSelect;
         _input.Gameplay.FistButton.performed     += OnFistSelect;
         _input.Gameplay.KnifeButton.performed    += OnKnifeSelect;
@@ -72,19 +71,17 @@ public class PlayerController : MonoBehaviour
 
     private void UnregisterInputCallbacks()
     {
-        _input.Gameplay.LightAttack.performed  -= OnLightAttack;
-        _input.Gameplay.HeavyAttack.performed  -= OnHeavyAttack;
-        _input.Gameplay.HeavyAttack.canceled   -= OnHeavyAttackReleased;
-        _input.Gameplay.Reload.performed       -= OnReload;
-        _input.Gameplay.ThrowPickup.performed  -= OnThrowPickup;
-        _input.Gameplay.Crouching.performed    -= OnDodge;
-        _input.Gameplay.Heal.performed         -= OnHeal;
-        _input.Gameplay.Interaction.performed  -= OnInteract;
-        _input.Gameplay.Zippo.performed        -= OnZippo;
-
-        _input.Gameplay.Run.started  -= OnRunStarted;
-        _input.Gameplay.Run.canceled -= OnRunCanceled;
-
+        _input.Gameplay.LightAttack.performed    -= OnLightAttack;
+        _input.Gameplay.HeavyAttack.performed    -= OnHeavyAttack;
+        _input.Gameplay.HeavyAttack.canceled     -= OnHeavyAttackReleased;
+        _input.Gameplay.Reload.performed         -= OnReload;
+        _input.Gameplay.ThrowPickup.performed    -= OnThrowPickup;
+        _input.Gameplay.Crouching.performed      -= OnDodge;
+        _input.Gameplay.Heal.performed           -= OnHeal;
+        _input.Gameplay.Interaction.performed    -= OnInteract;
+        _input.Gameplay.Zippo.performed          -= OnZippo;
+        _input.Gameplay.Run.started              -= OnRunStarted;
+        _input.Gameplay.Run.canceled             -= OnRunCanceled;
         _input.Gameplay.RevolverButton.performed -= OnRevolverSelect;
         _input.Gameplay.FistButton.performed     -= OnFistSelect;
         _input.Gameplay.KnifeButton.performed    -= OnKnifeSelect;
@@ -100,11 +97,11 @@ public class PlayerController : MonoBehaviour
     private void OnBeltSelect(InputAction.CallbackContext ctx)     => OnWeaponSelect(WeaponType.Belt);
 
     private void ReadMovementInput()
-    {
-        _moveInput = _input.Gameplay.Movement.ReadValue<Vector2>();
-        _movement.Move(CanMove() ? _moveInput : Vector2.zero);
-        _animator.SetMoving(_moveInput.sqrMagnitude > 0.01f);
-    }
+{
+    _moveInput = _input.Gameplay.Movement.ReadValue<Vector2>();
+    _movement.Move(CanMove() ? _moveInput : Vector2.zero);
+    _animator.SetMoving(_moveInput.sqrMagnitude > 0.01f && CanMove()); // ← CanMove() ekle
+}
 
     private void HandleRun()
     {
@@ -165,28 +162,33 @@ public class PlayerController : MonoBehaviour
     }
 
     private void OnHeal(InputAction.CallbackContext ctx)
+{
+    if (!CanAct() || IsHealing) return;
+    if (!_heal.CanHeal()) return; // sigara yoksa hiç girme
+    
+    IsHealing = true;
+    _cinematic.OnFinished += OnHealComplete;
+    _heal.UseHeal(null);
+}
+
+    private void OnHealComplete()
     {
-        if (!CanAct() || IsHealing) return;
-        IsHealing = true;
-        _heal.UseHeal(() => IsHealing = false);
+        _cinematic.OnFinished -= OnHealComplete;
+        IsHealing = false;
     }
 
     private void OnInteract(InputAction.CallbackContext ctx)
     {
-         Debug.Log("E basıldı");
-    if (!CanAct() || IsPickingUp) { Debug.Log("CanAct false veya IsPickingUp"); return; }
-    if (_interaction == null) { Debug.Log("InteractionSystem null"); return; }
-    
-    var target = _interaction.CurrentTarget;
-    Debug.Log($"CurrentTarget: {target}");
-    if (target == null) return;
+        if (!CanAct() || IsPickingUp) return;
+        if (_interaction == null) return;
+
+        var target = _interaction.CurrentTarget;
+        if (target == null) return;
 
         if (target.GetInteractionType() == InteractionType.Pickup)
         {
             IsPickingUp = true;
             _animator.PlayPickup();
-            // Pickup animasyonu kısa — 0.4s sonra tamamlandı say
-            // İleride Animation Event ile de bağlanabilir
             target.Interact(this);
             Invoke(nameof(EndPickup), 0.667f);
         }

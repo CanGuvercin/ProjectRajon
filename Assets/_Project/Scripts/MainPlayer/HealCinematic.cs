@@ -1,20 +1,11 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
-/// <summary>
-/// RAJON — HealCinematic
-/// Sigara yakma ritüeli: dünya solar, kamera zoom yapar, Emmi yalnız kalır.
-/// 
-/// Dünya karartma: SpriteRenderer ("Player" / "UI" tag hariç) + tüm Tilemap'ler solar.
-/// Time.timeScale dokunulmaz — IsHealing guard Emmi'yi korur.
-/// </summary>
 public class HealCinematic : MonoBehaviour
 {
-    // -------------------------------------------------------------------------
-    // Kamera
-    // -------------------------------------------------------------------------
     [Header("Kamera")]
     [SerializeField] private Camera _camera;
     [SerializeField] private float  _zoomInSize   = 3.0f;
@@ -22,43 +13,28 @@ public class HealCinematic : MonoBehaviour
     [SerializeField] private float  _zoomInSpeed  = 8f;
     [SerializeField] private float  _zoomOutSpeed = 4f;
 
-    // -------------------------------------------------------------------------
-    // Fade
-    // -------------------------------------------------------------------------
     [Header("Fade")]
     [SerializeField] private float _fadeDuration   = 0.3f;
     [SerializeField] private float _fadeInDuration = 0.5f;
 
-    // -------------------------------------------------------------------------
-    // Animasyon Süresi
-    // -------------------------------------------------------------------------
     [Header("Süre")]
-    [SerializeField] private float _smokingDuration = 1.333f; // Smoking_Emmi animasyon süresi
+    [SerializeField] private float _smokingDuration = 2.0f;
 
-    // -------------------------------------------------------------------------
-    // Müzik
-    // -------------------------------------------------------------------------
     [Header("Müzik")]
     [SerializeField] private AudioSource _audioSource;
     [SerializeField] private AudioClip   _healClip;
 
-    // -------------------------------------------------------------------------
-    // İç Durum — SpriteRenderer
-    // -------------------------------------------------------------------------
+    // Cinematic tamamen bitince fırlatılır — PlayerController dinler
+    public event Action OnFinished;
+
     private List<SpriteRenderer>              _worldSprites  = new List<SpriteRenderer>();
     private Dictionary<SpriteRenderer, float> _spriteAlphas  = new Dictionary<SpriteRenderer, float>();
-
-    // -------------------------------------------------------------------------
-    // İç Durum — Tilemap
-    // -------------------------------------------------------------------------
-    private List<Tilemap>              _worldTilemaps = new List<Tilemap>();
-    private Dictionary<Tilemap, float> _tilemapAlphas = new Dictionary<Tilemap, float>();
+    private List<Tilemap>                     _worldTilemaps = new List<Tilemap>();
+    private Dictionary<Tilemap, float>        _tilemapAlphas = new Dictionary<Tilemap, float>();
+    private List<ItemGlow>                    _activeGlows   = new List<ItemGlow>();
 
     private Coroutine _routine;
 
-    // -------------------------------------------------------------------------
-    // HealSystem'dan çağrılır
-    // -------------------------------------------------------------------------
     public void Play()
     {
         if (_routine != null) StopCoroutine(_routine);
@@ -73,9 +49,6 @@ public class HealCinematic : MonoBehaviour
         if (_audioSource && _audioSource.isPlaying) _audioSource.Stop();
     }
 
-    // -------------------------------------------------------------------------
-    // Ana Ritüel
-    // -------------------------------------------------------------------------
     private IEnumerator CinematicRoutine()
     {
         CollectWorldObjects();
@@ -86,25 +59,22 @@ public class HealCinematic : MonoBehaviour
             _audioSource.Play();
         }
 
-        // Dünya solar + zoom in (paralel)
         StartCoroutine(FadeWorld(0f, _fadeDuration));
         yield return StartCoroutine(ZoomTo(_zoomInSize, _zoomInSpeed));
 
-        // Emmi sigara animasyonu bekle
         yield return new WaitForSeconds(_smokingDuration);
 
-        // Dünya geri + zoom out (paralel)
         StartCoroutine(FadeWorld(1f, _fadeInDuration));
         yield return StartCoroutine(ZoomTo(_normalSize, _zoomOutSpeed));
 
         if (_audioSource && _audioSource.isPlaying) _audioSource.Stop();
 
+        RestoreGlows();
+
         _routine = null;
+        OnFinished?.Invoke();
     }
 
-    // -------------------------------------------------------------------------
-    // Sahne Objelerini Topla
-    // -------------------------------------------------------------------------
     private void CollectWorldObjects()
     {
         _worldSprites.Clear();
@@ -124,25 +94,25 @@ public class HealCinematic : MonoBehaviour
             _worldTilemaps.Add(tm);
             _tilemapAlphas[tm] = tm.color.a;
         }
+
+        // ItemGlow'ları durdur — cinematic sırasında parlamasınlar
+        _activeGlows.Clear();
+        foreach (var glow in FindObjectsOfType<ItemGlow>())
+        {
+            _activeGlows.Add(glow);
+            glow.enabled = false;
+        }
     }
 
-    // -------------------------------------------------------------------------
-    // Fade (0 = solar, 1 = geri gel)
-    // -------------------------------------------------------------------------
     private IEnumerator FadeWorld(float targetAlpha, float duration)
     {
-        // Başlangıç değerlerini snapshot al
         var spriteStart  = new Dictionary<SpriteRenderer, float>();
         var tilemapStart = new Dictionary<Tilemap, float>();
 
-        foreach (var sr in _worldSprites)
-            if (sr) spriteStart[sr] = sr.color.a;
-
-        foreach (var tm in _worldTilemaps)
-            if (tm) tilemapStart[tm] = tm.color.a;
+        foreach (var sr in _worldSprites)  if (sr) spriteStart[sr]  = sr.color.a;
+        foreach (var tm in _worldTilemaps) if (tm) tilemapStart[tm] = tm.color.a;
 
         float elapsed = 0f;
-
         while (elapsed < duration)
         {
             elapsed += Time.deltaTime;
@@ -152,72 +122,57 @@ public class HealCinematic : MonoBehaviour
             foreach (var sr in _worldSprites)
             {
                 if (!sr) continue;
-                Color c = sr.color;
-                c.a = Mathf.Lerp(spriteStart[sr], targetAlpha, e);
-                sr.color = c;
+                Color c = sr.color; c.a = Mathf.Lerp(spriteStart[sr], targetAlpha, e); sr.color = c;
             }
-
             foreach (var tm in _worldTilemaps)
             {
                 if (!tm) continue;
-                Color c = tm.color;
-                c.a = Mathf.Lerp(tilemapStart[tm], targetAlpha, e);
-                tm.color = c;
+                Color c = tm.color; c.a = Mathf.Lerp(tilemapStart[tm], targetAlpha, e); tm.color = c;
             }
-
             yield return null;
         }
 
-        // Kesin değer
-        foreach (var sr in _worldSprites)
-        {
-            if (!sr) continue;
-            Color c = sr.color; c.a = targetAlpha; sr.color = c;
-        }
-        foreach (var tm in _worldTilemaps)
-        {
-            if (!tm) continue;
-            Color c = tm.color; c.a = targetAlpha; tm.color = c;
-        }
+        foreach (var sr in _worldSprites)  { if (!sr) continue; Color c = sr.color; c.a = targetAlpha; sr.color = c; }
+        foreach (var tm in _worldTilemaps) { if (!tm) continue; Color c = tm.color; c.a = targetAlpha; tm.color = c; }
     }
 
-    // -------------------------------------------------------------------------
-    // Acil Restore (Stop çağrılırsa)
-    // -------------------------------------------------------------------------
     private void RestoreWorld()
     {
-        foreach (var pair in _spriteAlphas)
-        {
-            if (!pair.Key) continue;
-            Color c = pair.Key.color; c.a = pair.Value; pair.Key.color = c;
-        }
-        foreach (var pair in _tilemapAlphas)
-        {
-            if (!pair.Key) continue;
-            Color c = pair.Key.color; c.a = pair.Value; pair.Key.color = c;
-        }
+        foreach (var pair in _spriteAlphas)  { if (!pair.Key) continue; Color c = pair.Key.color; c.a = pair.Value; pair.Key.color = c; }
+        foreach (var pair in _tilemapAlphas) { if (!pair.Key) continue; Color c = pair.Key.color; c.a = pair.Value; pair.Key.color = c; }
+        RestoreGlows();
     }
 
-    // -------------------------------------------------------------------------
-    // Zoom
-    // -------------------------------------------------------------------------
+    private void RestoreGlows()
+    {
+        foreach (var glow in _activeGlows)
+            if (glow) glow.enabled = true;
+    }
+
     private IEnumerator ZoomTo(float target, float speed)
     {
         if (_camera == null) yield break;
 
-        while (!Mathf.Approximately(_camera.orthographicSize, target))
+        float timeout = 5f;
+        float elapsed = 0f;
+
+        while (elapsed < timeout)
         {
+            elapsed += Time.deltaTime;
             _camera.orthographicSize = Mathf.MoveTowards(
                 _camera.orthographicSize, target, speed * Time.deltaTime);
+
+            if (Mathf.Abs(_camera.orthographicSize - target) < 0.01f)
+            {
+                _camera.orthographicSize = target;
+                yield break;
+            }
             yield return null;
         }
 
         _camera.orthographicSize = target;
     }
 
-    // -------------------------------------------------------------------------
-    // Easing
-    // -------------------------------------------------------------------------
     private static float EaseOutQuart(float t) => 1f - Mathf.Pow(1f - t, 4f);
     private static float EaseInQuart(float t)  => t * t * t * t;
 }
