@@ -16,13 +16,14 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private InteractionSystem _interaction;
     [SerializeField] private HealCinematic     _cinematic;
 
-    public bool IsRunning   { get; private set; }
-    public bool IsDodging   { get; private set; }
-    public bool IsAttacking { get; private set; }
-    public bool IsHealing   { get; private set; }
-    public bool IsDead      { get; private set; }
-    public bool IsReloading { get; private set; }
-    public bool IsPickingUp { get; private set; }
+    public bool IsRunning        { get; private set; }
+    public bool IsDodging        { get; private set; }
+    public bool IsAttacking      { get; private set; }
+    public bool IsHealing        { get; private set; }
+    public bool IsDead           { get; private set; }
+    public bool IsReloading      { get; private set; }
+    public bool IsPickingUp      { get; private set; }
+    public bool IsWeaponSwitching => _weapon.IsSwitching;
 
     private RajonInputActions _input;
     private Vector2           _moveInput;
@@ -97,11 +98,11 @@ public class PlayerController : MonoBehaviour
     private void OnBeltSelect(InputAction.CallbackContext ctx)     => OnWeaponSelect(WeaponType.Belt);
 
     private void ReadMovementInput()
-{
-    _moveInput = _input.Gameplay.Movement.ReadValue<Vector2>();
-    _movement.Move(CanMove() ? _moveInput : Vector2.zero);
-    _animator.SetMoving(_moveInput.sqrMagnitude > 0.01f && CanMove()); // ← CanMove() ekle
-}
+    {
+        _moveInput = _input.Gameplay.Movement.ReadValue<Vector2>();
+        _movement.Move(CanMove() ? _moveInput : Vector2.zero);
+        _animator.SetMoving(_moveInput.sqrMagnitude > 0.01f && CanMove());
+    }
 
     private void HandleRun()
     {
@@ -157,19 +158,19 @@ public class PlayerController : MonoBehaviour
 
     private void OnWeaponSelect(WeaponType type)
     {
-        if (!CanAct()) return;
+        // Switching sırasında yeni silah seçimi bloklanır
+        if (!CanAct() || IsWeaponSwitching) return;
         _weapon.SwitchWeapon(type);
     }
 
     private void OnHeal(InputAction.CallbackContext ctx)
-{
-    if (!CanAct() || IsHealing) return;
-    if (!_heal.CanHeal()) return; // sigara yoksa hiç girme
-    
-    IsHealing = true;
-    _cinematic.OnFinished += OnHealComplete;
-    _heal.UseHeal(null);
-}
+    {
+        if (!CanAct() || IsHealing) return;
+        if (!_heal.CanHeal()) return;
+        IsHealing = true;
+        _cinematic.OnFinished += OnHealComplete;
+        _heal.UseHeal(null);
+    }
 
     private void OnHealComplete()
     {
@@ -215,7 +216,7 @@ public class PlayerController : MonoBehaviour
     }
 
     private bool CanMove()   => !IsDead && !IsHealing && !IsDodging && !IsPickingUp;
-    private bool CanAttack() => !IsDead && !IsHealing && !IsReloading && !IsDodging;
+    private bool CanAttack() => !IsDead && !IsHealing && !IsReloading && !IsDodging && !IsWeaponSwitching;
     private bool CanAct()    => !IsDead && !IsHealing;
 
     public void OnHit()
