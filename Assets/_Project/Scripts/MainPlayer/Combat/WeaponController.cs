@@ -2,12 +2,6 @@ using System;
 using System.Collections;
 using UnityEngine;
 
-/// <summary>
-/// RAJON — WeaponController
-/// Silah switching, saldırı delegasyonu, throw/pickup yönetimi.
-/// Hasar hesabı yapmaz — her silahın kendi attack class'ı hesaplar (ileride).
-/// PlayerController'dan çağrılır.
-/// </summary>
 public class WeaponController : MonoBehaviour
 {
     [Header("Revolver")]
@@ -16,10 +10,6 @@ public class WeaponController : MonoBehaviour
 
     [Header("Belt")]
     [SerializeField] private float _beltMaxChargeTime  = 2.0f;
-
-    [Header("Silah Geçiş Süreleri")]
-    [SerializeField] private float _holsterDuration = 0.4f;
-    [SerializeField] private float _drawDuration    = 0.5f;
 
     [Header("Referanslar")]
     [SerializeField] private EmmiAnimator  _animator;
@@ -41,6 +31,10 @@ public class WeaponController : MonoBehaviour
     {
         _currentAmmo   = _revolverMaxAmmo;
         _currentWeapon = WeaponType.Revolver;
+        
+        // TEST İÇİN - sonra kaldır
+        _hasKnife = true;
+        _hasBelt = true;
     }
 
     private void Start()
@@ -51,6 +45,33 @@ public class WeaponController : MonoBehaviour
     private void Update()
     {
         HandleBeltChargeRelease();
+    }
+
+    // -------------------------------------------------------------------------
+    // Silah Animasyon Süreleri
+    // -------------------------------------------------------------------------
+    private float GetDrawDuration(WeaponType type)
+    {
+        return type switch
+        {
+            WeaponType.Fist     => 0.833f,
+            WeaponType.Revolver => 0.917f,
+            WeaponType.Knife    => 0.833f,
+            WeaponType.Belt     => 1.167f,
+            _ => 0.5f
+        };
+    }
+
+    private float GetHolsterDuration(WeaponType type)
+    {
+        return type switch
+        {
+            WeaponType.Fist     => 0.833f,
+            WeaponType.Revolver => 0.917f,
+            WeaponType.Knife    => 0.833f,
+            WeaponType.Belt     => 1.167f,
+            _ => 0.5f
+        };
     }
 
     // -------------------------------------------------------------------------
@@ -75,9 +96,10 @@ public class WeaponController : MonoBehaviour
         // 1. Holster — mevcut silahı koy
         if (_currentWeapon != WeaponType.Fist)
         {
+            float holsterTime = GetHolsterDuration(_currentWeapon);
             _animator.PlayHolster();
-            Debug.Log($"Holster trigger atıldı, {_holsterDuration}s bekleniyor");
-            yield return new WaitForSeconds(_holsterDuration);
+            Debug.Log($"Holster trigger atıldı, {holsterTime}s bekleniyor");
+            yield return new WaitForSeconds(holsterTime);
             Debug.Log("Holster bekleme bitti");
         }
 
@@ -90,9 +112,10 @@ public class WeaponController : MonoBehaviour
         // 3. Draw — yeni silahı çek
         if (_currentWeapon != WeaponType.Fist)
         {
+            float drawTime = GetDrawDuration(_currentWeapon);
             _animator.PlayDraw();
-            Debug.Log($"Draw trigger atıldı, {_drawDuration}s bekleniyor");
-            yield return new WaitForSeconds(_drawDuration);
+            Debug.Log($"Draw trigger atıldı, {drawTime}s bekleniyor");
+            yield return new WaitForSeconds(drawTime);
             Debug.Log("Draw bekleme bitti");
         }
 
@@ -189,7 +212,6 @@ public class WeaponController : MonoBehaviour
         _isBeltCharging  = false;
         _beltChargeTimer = 0f;
         _stamina.TryConsume(StaminaConsumer.BeltHeavy);
-        // TODO: chargeRatio ile hasar
     }
 
     // -------------------------------------------------------------------------

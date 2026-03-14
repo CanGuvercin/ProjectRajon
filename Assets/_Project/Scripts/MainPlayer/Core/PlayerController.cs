@@ -215,7 +215,7 @@ public class PlayerController : MonoBehaviour
         });
     }
 
-    private bool CanMove()   => !IsDead && !IsHealing && !IsDodging && !IsPickingUp;
+    private bool CanMove()   => !IsDead && !IsHealing && !IsDodging && !IsPickingUp && !IsWeaponSwitching;
     private bool CanAttack() => !IsDead && !IsHealing && !IsReloading && !IsDodging && !IsWeaponSwitching;
     private bool CanAct()    => !IsDead && !IsHealing;
 
