@@ -7,6 +7,8 @@ public class WeaponController : MonoBehaviour
     [Header("Revolver")]
     [SerializeField] private int   _revolverMaxAmmo    = 5;
     [SerializeField] private float _revolverReloadTime = 1.8f;
+    [SerializeField] private GameObject _bulletPrefab;
+    [SerializeField] private Transform  _muzzlePoint;
 
     [Header("Belt")]
     [SerializeField] private float _beltMaxChargeTime  = 2.0f;
@@ -14,6 +16,7 @@ public class WeaponController : MonoBehaviour
     [Header("Referanslar")]
     [SerializeField] private EmmiAnimator  _animator;
     [SerializeField] private StaminaSystem _stamina;
+    [SerializeField] private Transform     _playerTransform;
 
     private WeaponType _currentWeapon = WeaponType.Revolver;
     private int        _currentAmmo;
@@ -45,6 +48,21 @@ public class WeaponController : MonoBehaviour
     private void Update()
     {
         HandleBeltChargeRelease();
+    }
+
+    // -------------------------------------------------------------------------
+    // Bullet Spawn
+    // -------------------------------------------------------------------------
+    private void SpawnBullet()
+    {
+        if (_bulletPrefab == null || _muzzlePoint == null) return;
+        
+        GameObject bullet = Instantiate(_bulletPrefab, _muzzlePoint.position, Quaternion.identity);
+        Bullet bulletScript = bullet.GetComponent<Bullet>();
+        
+        // Emmi'nin baktığı yön (scale.x negatifse sola bakıyor)
+        Vector2 direction = _playerTransform.localScale.x > 0 ? Vector2.right : Vector2.left;
+        bulletScript.SetDirection(direction);
     }
 
     // -------------------------------------------------------------------------
@@ -93,7 +111,6 @@ public class WeaponController : MonoBehaviour
         _isSwitching = true;
         Debug.Log($"SwitchRoutine başladı: {_currentWeapon} → {newWeapon}");
 
-        // 1. Holster — mevcut silahı koy
         if (_currentWeapon != WeaponType.Fist)
         {
             float holsterTime = GetHolsterDuration(_currentWeapon);
@@ -103,13 +120,11 @@ public class WeaponController : MonoBehaviour
             Debug.Log("Holster bekleme bitti");
         }
 
-        // 2. Silahı değiştir
         _currentWeapon = newWeapon;
         _animator.SetWeaponType(_currentWeapon);
         OnWeaponChanged?.Invoke(_currentWeapon);
         Debug.Log($"WeaponType set edildi: {_currentWeapon}");
 
-        // 3. Draw — yeni silahı çek
         if (_currentWeapon != WeaponType.Fist)
         {
             float drawTime = GetDrawDuration(_currentWeapon);
@@ -128,38 +143,37 @@ public class WeaponController : MonoBehaviour
     // Light Attack
     // -------------------------------------------------------------------------
     public void LightAttack(bool isMoving, Action onComplete)
-{
-    switch (_currentWeapon)
     {
-        case WeaponType.Revolver:
-            if (_currentAmmo <= 0) { onComplete?.Invoke(); return; }
-            _currentAmmo--;
-            OnAmmoChanged?.Invoke(_currentAmmo, _revolverMaxAmmo);
-            break;
+        switch (_currentWeapon)
+        {
+            case WeaponType.Revolver:
+                if (_currentAmmo <= 0) { onComplete?.Invoke(); return; }
+                _currentAmmo--;
+                OnAmmoChanged?.Invoke(_currentAmmo, _revolverMaxAmmo);
+                SpawnBullet();
+                break;
 
-        case WeaponType.Fist:
-            // Stamina kontrolü yok
-            break;
+            case WeaponType.Fist:
+                break;
 
-        case WeaponType.Knife:
-            // Stamina kontrolü yok
-            break;
+            case WeaponType.Knife:
+                break;
 
-        case WeaponType.Belt:
-            if (!_stamina.TryConsume(StaminaConsumer.BeltLight))
-            { onComplete?.Invoke(); return; }
-            _stamina.SetConsuming(StaminaConsumer.BeltLight, true);
-            break;
+            case WeaponType.Belt:
+                if (!_stamina.TryConsume(StaminaConsumer.BeltLight))
+                { onComplete?.Invoke(); return; }
+                _stamina.SetConsuming(StaminaConsumer.BeltLight, true);
+                break;
+        }
+
+        if (isMoving && _currentWeapon != WeaponType.Belt)
+            _animator.PlayWalkingLightAttack();
+        else
+            _animator.PlayLightAttack();
+            
+        StartCoroutine(WaitForAnimation(onComplete));
     }
 
-    // Animasyon seçimi
-    if (isMoving && _currentWeapon != WeaponType.Belt)
-        _animator.PlayWalkingLightAttack();
-    else
-        _animator.PlayLightAttack();
-        
-    StartCoroutine(WaitForAnimation(onComplete));
-}
     // -------------------------------------------------------------------------
     // Heavy Attack
     // -------------------------------------------------------------------------
@@ -172,6 +186,7 @@ public class WeaponController : MonoBehaviour
                 _currentAmmo -= 2;
                 OnAmmoChanged?.Invoke(_currentAmmo, _revolverMaxAmmo);
                 _animator.PlayHeavyAttack();
+                StartCoroutine(SprayBullets());
                 break;
 
             case WeaponType.Fist:
@@ -196,6 +211,13 @@ public class WeaponController : MonoBehaviour
             StartCoroutine(WaitForAnimation(onComplete));
         else
             onComplete?.Invoke();
+    }
+
+    private IEnumerator SprayBullets()
+    {
+        SpawnBullet();
+        yield return new WaitForSeconds(0.15f);
+        SpawnBullet();
     }
 
     // -------------------------------------------------------------------------
