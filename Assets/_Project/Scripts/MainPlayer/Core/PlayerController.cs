@@ -1,10 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-/// <summary>
-/// RAJON — PlayerController
-/// Koordinatör. Input okur, state tutar, atomik sistemlere delege eder.
-/// </summary>
 public class PlayerController : MonoBehaviour
 {
     [Header("Sistemler")]
@@ -16,13 +12,14 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private InteractionSystem _interaction;
     [SerializeField] private HealCinematic     _cinematic;
 
-    public bool IsRunning        { get; private set; }
-    public bool IsDodging        { get; private set; }
-    public bool IsAttacking      { get; private set; }
-    public bool IsHealing        { get; private set; }
-    public bool IsDead           { get; private set; }
-    public bool IsReloading      { get; private set; }
-    public bool IsPickingUp      { get; private set; }
+    public bool IsRunning         { get; private set; }
+    public bool IsDodging         { get; private set; }
+    public bool IsLightAttacking  { get; private set; }
+    public bool IsHeavyAttacking  { get; private set; }
+    public bool IsHealing         { get; private set; }
+    public bool IsDead            { get; private set; }
+    public bool IsReloading       { get; private set; }
+    public bool IsPickingUp       { get; private set; }
     public bool IsWeaponSwitching => _weapon.IsSwitching;
 
     private RajonInputActions _input;
@@ -125,17 +122,18 @@ public class PlayerController : MonoBehaviour
     }
 
     private void OnLightAttack(InputAction.CallbackContext ctx)
-    {
-        if (!CanAttack()) return;
-        IsAttacking = true;
-        _weapon.LightAttack(() => IsAttacking = false);
-    }
+{
+    if (!CanAttack()) return;
+    IsLightAttacking = true;
+    bool isMoving = _moveInput.sqrMagnitude > 0.01f;
+    _weapon.LightAttack(isMoving, () => IsLightAttacking = false);
+}
 
     private void OnHeavyAttack(InputAction.CallbackContext ctx)
     {
         if (!CanAttack()) return;
-        IsAttacking = true;
-        _weapon.HeavyAttack(() => IsAttacking = false);
+        IsHeavyAttacking = true;
+        _weapon.HeavyAttack(() => IsHeavyAttacking = false);
     }
 
     private void OnHeavyAttackReleased(InputAction.CallbackContext ctx)
@@ -158,7 +156,6 @@ public class PlayerController : MonoBehaviour
 
     private void OnWeaponSelect(WeaponType type)
     {
-        // Switching sırasında yeni silah seçimi bloklanır
         if (!CanAct() || IsWeaponSwitching) return;
         _weapon.SwitchWeapon(type);
     }
@@ -215,14 +212,30 @@ public class PlayerController : MonoBehaviour
         });
     }
 
-    private bool CanMove()   => !IsDead && !IsHealing && !IsDodging && !IsPickingUp && !IsWeaponSwitching;
+    private bool CanMove()
+    {
+        if (IsDead || IsHealing || IsDodging || IsPickingUp || IsWeaponSwitching) return false;
+        
+        // Heavy Attack → her zaman durur
+        if (IsHeavyAttacking) return false;
+        
+        // Light Attack sırasında Belt hariç herkes hareket edebilir
+        if (IsLightAttacking)
+        {
+            return _weapon.CurrentWeapon != WeaponType.Belt;
+        }
+        
+        return true;
+    }
+
     private bool CanAttack() => !IsDead && !IsHealing && !IsReloading && !IsDodging && !IsWeaponSwitching;
     private bool CanAct()    => !IsDead && !IsHealing;
 
     public void OnHit()
     {
         if (IsDead) return;
-        IsAttacking = false;
+        IsLightAttacking = false;
+        IsHeavyAttacking = false;
         IsReloading = false;
         _animator.PlayHit();
     }

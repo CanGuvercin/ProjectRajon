@@ -127,36 +127,39 @@ public class WeaponController : MonoBehaviour
     // -------------------------------------------------------------------------
     // Light Attack
     // -------------------------------------------------------------------------
-    public void LightAttack(Action onComplete)
+    public void LightAttack(bool isMoving, Action onComplete)
+{
+    switch (_currentWeapon)
     {
-        switch (_currentWeapon)
-        {
-            case WeaponType.Revolver:
-                if (_currentAmmo <= 0) { onComplete?.Invoke(); return; }
-                _currentAmmo--;
-                OnAmmoChanged?.Invoke(_currentAmmo, _revolverMaxAmmo);
-                _animator.PlayLightAttack();
-                break;
+        case WeaponType.Revolver:
+            if (_currentAmmo <= 0) { onComplete?.Invoke(); return; }
+            _currentAmmo--;
+            OnAmmoChanged?.Invoke(_currentAmmo, _revolverMaxAmmo);
+            break;
 
-            case WeaponType.Fist:
-                _animator.PlayLightAttack();
-                break;
+        case WeaponType.Fist:
+            // Stamina kontrolü yok
+            break;
 
-            case WeaponType.Knife:
-                _animator.PlayLightAttack();
-                break;
+        case WeaponType.Knife:
+            // Stamina kontrolü yok
+            break;
 
-            case WeaponType.Belt:
-                if (!_stamina.TryConsume(StaminaConsumer.BeltLight))
-                { onComplete?.Invoke(); return; }
-                _stamina.SetConsuming(StaminaConsumer.BeltLight, true);
-                _animator.PlayLightAttack();
-                break;
-        }
-
-        StartCoroutine(WaitForAnimation(onComplete));
+        case WeaponType.Belt:
+            if (!_stamina.TryConsume(StaminaConsumer.BeltLight))
+            { onComplete?.Invoke(); return; }
+            _stamina.SetConsuming(StaminaConsumer.BeltLight, true);
+            break;
     }
 
+    // Animasyon seçimi
+    if (isMoving && _currentWeapon != WeaponType.Belt)
+        _animator.PlayWalkingLightAttack();
+    else
+        _animator.PlayLightAttack();
+        
+    StartCoroutine(WaitForAnimation(onComplete));
+}
     // -------------------------------------------------------------------------
     // Heavy Attack
     // -------------------------------------------------------------------------

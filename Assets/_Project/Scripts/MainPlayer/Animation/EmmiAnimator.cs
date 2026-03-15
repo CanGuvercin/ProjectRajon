@@ -25,6 +25,10 @@ public class EmmiAnimator : MonoBehaviour
     private static readonly int TriggerHolster     = Animator.StringToHash("Holster"); // silahı sor
     private static readonly int TriggerDraw        = Animator.StringToHash("Draw");    // silahı çek
 
+    private static readonly int TriggerWalkingLightAttack = Animator.StringToHash("WalkingLightAttack");
+
+
+
     private Animator _animator;
 
     private void Awake() => _animator = GetComponent<Animator>();
@@ -82,4 +86,6 @@ public void SetWeaponType(WeaponType type) =>
         _animator.SetInteger(Animator.StringToHash("DeathIndex"), Random.Range(0, 2));
         _animator.SetTrigger(TriggerDeath);
     }
+
+    public void PlayWalkingLightAttack() => _animator.SetTrigger(TriggerWalkingLightAttack);
 }
