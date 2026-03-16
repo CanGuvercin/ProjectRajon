@@ -205,8 +205,8 @@ MonoBehaviour:
   _amount: 1
   _sortingLayerName: SpriteRenderer
   _sortingOrder: 5
-  _riseAmount: 5
-  _riseDuration: 0.8
+  _riseAmount: 0.6
+  _riseDuration: 0.4
 --- !u!58 &7918662064904196959
 CircleCollider2D:
   m_ObjectHideFlags: 0
