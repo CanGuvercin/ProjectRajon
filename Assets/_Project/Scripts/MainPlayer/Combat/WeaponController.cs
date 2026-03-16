@@ -6,12 +6,15 @@ public class WeaponController : MonoBehaviour
 {
     [Header("Revolver")]
     [SerializeField] private int   _revolverMaxAmmo    = 5;
-    [SerializeField] private float _revolverReloadTime = 0.75f; // Yeni süreye göre ayarla
+    [SerializeField] private float _revolverReloadTime = 0.75f;
     [SerializeField] private GameObject _bulletPrefab;
     [SerializeField] private Transform  _muzzlePoint;
 
     [Header("Belt")]
-    [SerializeField] private float _beltMaxChargeTime  = 2.0f;
+    [SerializeField] private float _chargePerLevel = 0.5f;  // Her kademe için süre
+    [SerializeField] private GameObject[] _beltWhipPrefabs = new GameObject[3]; // 3 farklı uzunluk
+    [SerializeField] private Transform _beltSpawnPoint;
+    [SerializeField] private float[] _beltDamage = { 10f, 20f, 40f }; // Kademe başına damage
 
     [Header("Referanslar")]
     [SerializeField] private EmmiAnimator  _animator;
@@ -25,11 +28,13 @@ public class WeaponController : MonoBehaviour
     private bool       _hasBelt;
     private bool       _isBeltCharging;
     private float      _beltChargeTimer;
+    private int        _beltChargeLevel;
     private bool       _revolverOnGround;
     private bool       _isSwitching;
 
     public event Action<WeaponType> OnWeaponChanged;
     public event Action<int, int>   OnAmmoChanged;
+    public event Action<int>        OnBeltChargeLevelChanged; // UI için
 
     private void Awake()
     {
@@ -48,7 +53,7 @@ public class WeaponController : MonoBehaviour
 
     private void Update()
     {
-        HandleBeltChargeRelease();
+        HandleBeltCharging();
     }
 
     // -------------------------------------------------------------------------
@@ -155,7 +160,6 @@ public class WeaponController : MonoBehaviour
             case WeaponType.Belt:
                 if (!_stamina.TryConsume(StaminaConsumer.BeltLight))
                 { onComplete?.Invoke(); return; }
-                _stamina.SetConsuming(StaminaConsumer.BeltLight, true);
                 break;
         }
 
@@ -193,10 +197,14 @@ public class WeaponController : MonoBehaviour
                 break;
 
             case WeaponType.Belt:
-                _isBeltCharging  = true;
+                // Şarj başlat
+                if (!_stamina.TryConsume(StaminaConsumer.BeltHeavy))
+                { onComplete?.Invoke(); return; }
+                
+                _isBeltCharging = true;
                 _beltChargeTimer = 0f;
-                _stamina.SetConsuming(StaminaConsumer.BeltLight, false);
-                _animator.PlayHeavyAttack();
+                _beltChargeLevel = 0;
+                _animator.PlayBeltCharging();
                 break;
         }
 
@@ -214,22 +222,75 @@ public class WeaponController : MonoBehaviour
     }
 
     // -------------------------------------------------------------------------
-    // Belt Şarj
+    // Belt Şarj Sistemi
     // -------------------------------------------------------------------------
-    private void HandleBeltChargeRelease()
+    private void HandleBeltCharging()
     {
         if (!_isBeltCharging) return;
+        
         _beltChargeTimer += Time.deltaTime;
-        if (_beltChargeTimer >= _beltMaxChargeTime) ReleaseBelt();
+        
+        // Kademe hesapla (0.5s = 1, 1.0s = 2, 1.5s = 3)
+        int newLevel = Mathf.Clamp(Mathf.FloorToInt(_beltChargeTimer / _chargePerLevel) + 1, 1, 3);
+        
+        if (newLevel != _beltChargeLevel)
+        {
+            _beltChargeLevel = newLevel;
+            OnBeltChargeLevelChanged?.Invoke(_beltChargeLevel);
+            // TODO: Kademe değişim sesi
+        }
     }
 
     public void ReleaseBelt()
     {
         if (!_isBeltCharging) return;
-        float chargeRatio = Mathf.Clamp01(_beltChargeTimer / _beltMaxChargeTime);
-        _isBeltCharging  = false;
+        
+        int level = _beltChargeLevel;
+        _isBeltCharging = false;
         _beltChargeTimer = 0f;
-        _stamina.TryConsume(StaminaConsumer.BeltHeavy);
+        _beltChargeLevel = 0;
+        
+        OnBeltChargeLevelChanged?.Invoke(0);
+        
+        if (level == 0)
+        {
+            // Şarj yoksa Light Attack
+            _animator.PlayLightAttack();
+        }
+        else
+        {
+            // Şarj seviyesine göre Heavy Attack
+            _animator.PlayHeavyAttack();
+            SpawnBeltWhip(level);
+        }
+    }
+
+    private void SpawnBeltWhip(int level)
+    {
+        if (level < 1 || level > 3) return;
+        if (_beltWhipPrefabs == null || _beltWhipPrefabs.Length < level) return;
+        if (_beltWhipPrefabs[level - 1] == null) return;
+        if (_beltSpawnPoint == null) return;
+        
+        GameObject whip = Instantiate(
+            _beltWhipPrefabs[level - 1], 
+            _beltSpawnPoint.position, 
+            Quaternion.identity
+        );
+        
+        // Emmi'nin baktığı yöne çevir
+        float direction = _playerTransform.localScale.x > 0 ? 1f : -1f;
+        whip.transform.localScale = new Vector3(direction, 1f, 1f);
+        
+        // BeltWhip'e damage bilgisi ver
+        BeltWhip whipScript = whip.GetComponent<BeltWhip>();
+        if (whipScript != null)
+        {
+            whipScript.SetDamage(_beltDamage[level - 1]);
+        }
+        
+        // Kısa süre sonra yok et
+        Destroy(whip, 0.5f);
     }
 
     // -------------------------------------------------------------------------
@@ -240,7 +301,6 @@ public class WeaponController : MonoBehaviour
         if (_currentWeapon != WeaponType.Revolver) { onComplete?.Invoke(); return; }
         if (_currentAmmo == _revolverMaxAmmo)       { onComplete?.Invoke(); return; }
         
-        // Şarjör kontrolü
         if (_ammoUI != null && !_ammoUI.HasMagazine()) 
         { 
             onComplete?.Invoke(); 
@@ -252,21 +312,16 @@ public class WeaponController : MonoBehaviour
 
     private IEnumerator ReloadRoutine(Action onComplete)
     {
-        // Şarjör harca
         if (_ammoUI != null)
             _ammoUI.UseMagazine();
         
-        // Emmi reload animasyonu
         _animator.PlayReload();
         
-        // Animasyonun %40'ında UI reload başlasın
         yield return new WaitForSeconds(_revolverReloadTime * 0.4f);
         
-        // UI reload animasyonu
         if (_ammoUI != null)
             _ammoUI.PlayReloadAnimation(_revolverMaxAmmo);
         
-        // Kalan süreyi bekle
         yield return new WaitForSeconds(_revolverReloadTime * 0.6f);
         
         _currentAmmo = _revolverMaxAmmo;
@@ -337,7 +392,8 @@ public class WeaponController : MonoBehaviour
     public bool       HasBelt          => _hasBelt;
     public bool       IsBeltCharging   => _isBeltCharging;
     public bool       IsSwitching      => _isSwitching;
-    public float      BeltChargeRatio  => Mathf.Clamp01(_beltChargeTimer / _beltMaxChargeTime);
+    public int        BeltChargeLevel  => _beltChargeLevel;
+    public float      BeltChargeRatio  => Mathf.Clamp01(_beltChargeTimer / (_chargePerLevel * 3f));
 
     private IEnumerator WaitForAnimation(Action onComplete)
     {
