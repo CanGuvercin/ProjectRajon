@@ -1,5 +1,36 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &3966061610214096055
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4659877688282600044}
+  m_Layer: 8
+  m_Name: HitboxCenter
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4659877688282600044
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3966061610214096055}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.277, y: 1.08, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8285203143980573456}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &5559221401825921869
 GameObject:
   m_ObjectHideFlags: 0
@@ -21,6 +52,8 @@ GameObject:
   - component: {fileID: 1533035665428984932}
   - component: {fileID: 8220300157917299582}
   - component: {fileID: 7899680117409710578}
+  - component: {fileID: 5221340548960525652}
+  - component: {fileID: 3699616641314833821}
   m_Layer: 8
   m_Name: Emmi
   m_TagString: Player
@@ -42,6 +75,8 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1408162869492520290}
+  - {fileID: 3264996372729970175}
+  - {fileID: 4659877688282600044}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &3396794381535358964
@@ -122,7 +157,7 @@ Rigidbody2D:
   m_Interpolate: 0
   m_SleepingMode: 1
   m_CollisionDetection: 0
-  m_Constraints: 0
+  m_Constraints: 4
 --- !u!95 &4162402151799603447
 Animator:
   serializedVersion: 5
@@ -210,13 +245,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _revolverMaxAmmo: 5
-  _revolverReloadTime: 1.8
-  _bulletPrefab: {fileID: 0}
-  _muzzlePoint: {fileID: 0}
+  _revolverReloadTime: 0.75
+  _bulletPrefab: {fileID: 4111826553351182725, guid: 84f07f41b8b2471438f43e51d641ffb1, type: 3}
+  _muzzlePoint: {fileID: 1408162869492520290}
   _beltMaxChargeTime: 2
   _animator: {fileID: 6508314357881282700}
   _stamina: {fileID: 47803451807987966}
-  _playerTransform: {fileID: 0}
+  _playerTransform: {fileID: 8285203143980573456}
+  _ammoUI: {fileID: 0}
 --- !u!114 &230615252229037385
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -301,6 +337,61 @@ MonoBehaviour:
   _interactableLayer:
     serializedVersion: 2
     m_Bits: 512
+--- !u!70 &5221340548960525652
+CapsuleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5559221401825921869}
+  m_Enabled: 1
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: -0.05370474, y: 1.0126598}
+  m_Size: {x: 0.6090331, y: 1.6925492}
+  m_Direction: 0
+--- !u!114 &3699616641314833821
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5559221401825921869}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1c476bb97317d2142908d5b690f56b0b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _hitPoint: {fileID: 4659877688282600044}
+  _hitRadius: 0.8
+  _enemyLayer:
+    serializedVersion: 2
+    m_Bits: 1024
+  _lightDamage: 10
+  _heavyDamage: 25
+  _walkingLightDamage: 5
 --- !u!1 &5905677100879705522
 GameObject:
   m_ObjectHideFlags: 0
@@ -327,6 +418,37 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0.85, y: 1.568, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8285203143980573456}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &6137976207569572695
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3264996372729970175}
+  m_Layer: 8
+  m_Name: Emmi's Head
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3264996372729970175
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6137976207569572695}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 1.671, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

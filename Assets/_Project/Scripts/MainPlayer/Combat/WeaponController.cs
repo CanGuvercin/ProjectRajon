@@ -6,7 +6,7 @@ public class WeaponController : MonoBehaviour
 {
     [Header("Revolver")]
     [SerializeField] private int   _revolverMaxAmmo    = 5;
-    [SerializeField] private float _revolverReloadTime = 1.8f;
+    [SerializeField] private float _revolverReloadTime = 0.75f; // Yeni süreye göre ayarla
     [SerializeField] private GameObject _bulletPrefab;
     [SerializeField] private Transform  _muzzlePoint;
 
