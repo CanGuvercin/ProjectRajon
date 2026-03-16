@@ -17,6 +17,7 @@ public class WeaponController : MonoBehaviour
     [SerializeField] private EmmiAnimator  _animator;
     [SerializeField] private StaminaSystem _stamina;
     [SerializeField] private Transform     _playerTransform;
+    [SerializeField] private AmmoUI        _ammoUI;
 
     private WeaponType _currentWeapon = WeaponType.Revolver;
     private int        _currentAmmo;
@@ -60,7 +61,6 @@ public class WeaponController : MonoBehaviour
         GameObject bullet = Instantiate(_bulletPrefab, _muzzlePoint.position, Quaternion.identity);
         Bullet bulletScript = bullet.GetComponent<Bullet>();
         
-        // Emmi'nin baktığı yön (scale.x negatifse sola bakıyor)
         Vector2 direction = _playerTransform.localScale.x > 0 ? Vector2.right : Vector2.left;
         bulletScript.SetDirection(direction);
     }
@@ -93,15 +93,15 @@ public class WeaponController : MonoBehaviour
     }
 
     // -------------------------------------------------------------------------
-    // Silah Değiştirme — Holster → Draw sekansı
+    // Silah Değiştirme
     // -------------------------------------------------------------------------
     public void SwitchWeapon(WeaponType type, Action onComplete = null)
     {
-        if (type == _currentWeapon)                           { Debug.Log($"SwitchWeapon: zaten {type}"); onComplete?.Invoke(); return; }
-        if (type == WeaponType.Knife   && !_hasKnife)         { Debug.Log("SwitchWeapon: bıçak yok");    onComplete?.Invoke(); return; }
-        if (type == WeaponType.Belt    && !_hasBelt)          { Debug.Log("SwitchWeapon: kemer yok");    onComplete?.Invoke(); return; }
-        if (type == WeaponType.Revolver && _revolverOnGround) { Debug.Log("SwitchWeapon: revolver yerde"); onComplete?.Invoke(); return; }
-        if (_isSwitching)                                     { Debug.Log("SwitchWeapon: zaten switching"); onComplete?.Invoke(); return; }
+        if (type == _currentWeapon)                           { onComplete?.Invoke(); return; }
+        if (type == WeaponType.Knife   && !_hasKnife)         { onComplete?.Invoke(); return; }
+        if (type == WeaponType.Belt    && !_hasBelt)          { onComplete?.Invoke(); return; }
+        if (type == WeaponType.Revolver && _revolverOnGround) { onComplete?.Invoke(); return; }
+        if (_isSwitching)                                     { onComplete?.Invoke(); return; }
 
         StartCoroutine(SwitchRoutine(type, onComplete));
     }
@@ -109,33 +109,26 @@ public class WeaponController : MonoBehaviour
     private IEnumerator SwitchRoutine(WeaponType newWeapon, Action onComplete)
     {
         _isSwitching = true;
-        Debug.Log($"SwitchRoutine başladı: {_currentWeapon} → {newWeapon}");
 
         if (_currentWeapon != WeaponType.Fist)
         {
             float holsterTime = GetHolsterDuration(_currentWeapon);
             _animator.PlayHolster();
-            Debug.Log($"Holster trigger atıldı, {holsterTime}s bekleniyor");
             yield return new WaitForSeconds(holsterTime);
-            Debug.Log("Holster bekleme bitti");
         }
 
         _currentWeapon = newWeapon;
         _animator.SetWeaponType(_currentWeapon);
         OnWeaponChanged?.Invoke(_currentWeapon);
-        Debug.Log($"WeaponType set edildi: {_currentWeapon}");
 
         if (_currentWeapon != WeaponType.Fist)
         {
             float drawTime = GetDrawDuration(_currentWeapon);
             _animator.PlayDraw();
-            Debug.Log($"Draw trigger atıldı, {drawTime}s bekleniyor");
             yield return new WaitForSeconds(drawTime);
-            Debug.Log("Draw bekleme bitti");
         }
 
         _isSwitching = false;
-        Debug.Log("SwitchRoutine bitti, _isSwitching = false");
         onComplete?.Invoke();
     }
 
@@ -246,12 +239,37 @@ public class WeaponController : MonoBehaviour
     {
         if (_currentWeapon != WeaponType.Revolver) { onComplete?.Invoke(); return; }
         if (_currentAmmo == _revolverMaxAmmo)       { onComplete?.Invoke(); return; }
+        
+        // Şarjör kontrolü
+        if (_ammoUI != null && !_ammoUI.HasMagazine()) 
+        { 
+            Debug.Log("Şarjör yok!");
+            onComplete?.Invoke(); 
+            return; 
+        }
+        
         StartCoroutine(ReloadRoutine(onComplete));
     }
 
     private IEnumerator ReloadRoutine(Action onComplete)
     {
-        yield return new WaitForSeconds(_revolverReloadTime);
+        // Şarjör harca
+        if (_ammoUI != null)
+            _ammoUI.UseMagazine();
+        
+        // Emmi reload animasyonu
+        _animator.PlayReload();
+        
+        // Animasyonun %40'ında UI reload başlasın
+        yield return new WaitForSeconds(_revolverReloadTime * 0.4f);
+        
+        // UI reload animasyonu
+        if (_ammoUI != null)
+            _ammoUI.PlayReloadAnimation(_revolverMaxAmmo);
+        
+        // Kalan süreyi bekle
+        yield return new WaitForSeconds(_revolverReloadTime * 0.6f);
+        
         _currentAmmo = _revolverMaxAmmo;
         OnAmmoChanged?.Invoke(_currentAmmo, _revolverMaxAmmo);
         onComplete?.Invoke();

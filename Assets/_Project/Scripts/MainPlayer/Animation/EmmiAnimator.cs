@@ -24,8 +24,8 @@ public class EmmiAnimator : MonoBehaviour
     private static readonly int TriggerZippo       = Animator.StringToHash("Zippo");
     private static readonly int TriggerHolster     = Animator.StringToHash("Holster"); // silahı sor
     private static readonly int TriggerDraw        = Animator.StringToHash("Draw");    // silahı çek
-
     private static readonly int TriggerWalkingLightAttack = Animator.StringToHash("WalkingLightAttack");
+    private static readonly int TriggerReload = Animator.StringToHash("Reload");
 
 
 
@@ -88,4 +88,6 @@ public void SetWeaponType(WeaponType type) =>
     }
 
     public void PlayWalkingLightAttack() => _animator.SetTrigger(TriggerWalkingLightAttack);
+
+    public void PlayReload() => _animator.SetTrigger(TriggerReload);
 }

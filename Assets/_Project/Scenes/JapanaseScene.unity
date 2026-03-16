@@ -7409,8 +7409,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: -34.4644, y: 22.575}
-  m_SizeDelta: {x: 58.6083, y: 38.15}
+  m_AnchoredPosition: {x: -23.855991, y: 16.8524}
+  m_SizeDelta: {x: 41.104, y: 26.7046}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1286924841
 MonoBehaviour:
@@ -7459,8 +7459,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 26.3
-  m_fontSizeBase: 26.3
+  m_fontSize: 20.01
+  m_fontSizeBase: 20.01
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -10622,6 +10622,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1428863876}
+  - component: {fileID: 1428863877}
   m_Layer: 5
   m_Name: AmmoPanel
   m_TagString: Untagged
@@ -10649,8 +10650,43 @@ RectTransform:
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 291.6223, y: 65.5335}
+  m_SizeDelta: {x: 137.3708, y: 34.2327}
   m_Pivot: {x: 1, y: 0}
+--- !u!114 &1428863877
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1428863875}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5459d584e23099848aabadff4b18f2ad, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _weapon: {fileID: 2053814121}
+  _magazineText: {fileID: 1286924841}
+  _slots:
+  - {fileID: 1144076806}
+  - {fileID: 1223400796}
+  - {fileID: 1449433239}
+  - {fileID: 391124040}
+  - {fileID: 1211747294}
+  - {fileID: 1378063076}
+  - {fileID: 1515759491}
+  - {fileID: 2000523735}
+  _bullets:
+  - {fileID: 920894573}
+  - {fileID: 1603150001}
+  - {fileID: 1342557810}
+  - {fileID: 1495927099}
+  - {fileID: 1472338458}
+  - {fileID: 1225457979}
+  - {fileID: 836146764}
+  - {fileID: 1403526430}
+  _reloadBulletDelay: 0.12
+  _bulletDropDuration: 0.08
+  _bulletDropOffset: 15
 --- !u!1 &1449433239
 GameObject:
   m_ObjectHideFlags: 0
@@ -11103,7 +11139,7 @@ RectTransform:
   m_GameObject: {fileID: 1779700121}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.5, y: 0.5, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1144076807}
@@ -11118,8 +11154,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 118.06955, y: -33.1364}
-  m_SizeDelta: {x: 219.5689, y: 57.7944}
+  m_AnchoredPosition: {x: 46.481, y: -16.649}
+  m_SizeDelta: {x: 185.93, y: 56.336}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1779700123
 MonoBehaviour:
@@ -11138,15 +11174,15 @@ MonoBehaviour:
     m_Right: 0
     m_Top: 0
     m_Bottom: 0
-  m_ChildAlignment: 0
-  m_Spacing: 0
+  m_ChildAlignment: 4
+  m_Spacing: -50
   m_ChildForceExpandWidth: 1
   m_ChildForceExpandHeight: 1
   m_ChildControlWidth: 0
   m_ChildControlHeight: 0
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
-  m_ReverseArrangement: 0
+  m_ReverseArrangement: 1
 --- !u!1 &1914297600
 GameObject:
   m_ObjectHideFlags: 0
@@ -11400,6 +11436,17 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 8285203143980573456, guid: 8542c0b87e9804544af9cc3a07762f08, type: 3}
   m_PrefabInstance: {fileID: 5229022164089368635}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &2053814121 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3367876588307967039, guid: 8542c0b87e9804544af9cc3a07762f08, type: 3}
+  m_PrefabInstance: {fileID: 5229022164089368635}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef05f4ba85a5f0c47bd51513dfa82de7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &2114023674
 GameObject:
   m_ObjectHideFlags: 0
@@ -11434,8 +11481,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 145.81, y: -39.97406}
-  m_SizeDelta: {x: 291.63, y: 52.5969}
+  m_AnchoredPosition: {x: 68.684, y: -17.116}
+  m_SizeDelta: {x: 137.37, y: 34.233}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2114023676
 MonoBehaviour:
@@ -11758,6 +11805,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 3367876588307967039, guid: 8542c0b87e9804544af9cc3a07762f08, type: 3}
+      propertyPath: _ammoUI
+      value: 
+      objectReference: {fileID: 1428863877}
     - target: {fileID: 3367876588307967039, guid: 8542c0b87e9804544af9cc3a07762f08, type: 3}
       propertyPath: _muzzlePoint
       value: 
