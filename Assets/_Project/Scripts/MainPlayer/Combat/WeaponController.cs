@@ -243,7 +243,6 @@ public class WeaponController : MonoBehaviour
         // Şarjör kontrolü
         if (_ammoUI != null && !_ammoUI.HasMagazine()) 
         { 
-            Debug.Log("Şarjör yok!");
             onComplete?.Invoke(); 
             return; 
         }

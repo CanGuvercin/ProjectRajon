@@ -25,18 +25,25 @@ public class Bullet : MonoBehaviour
         transform.Translate(_direction * _speed * Time.deltaTime, Space.World);
     }
     
-    private void OnTriggerEnter2D(Collider2D other)
+ private void OnTriggerEnter2D(Collider2D other)
+{
+    if (other.CompareTag("Enemy"))
     {
-        if (other.CompareTag("Enemy"))
+        EnemyHealth health = other.GetComponent<EnemyHealth>();
+        if (health != null)
         {
-            // TODO: Damage sistemi
-            // other.GetComponent<Health>()?.TakeDamage(_damage);
-            Destroy(gameObject);
+            health.TakeDamage(_damage);
         }
-        
-        if (other.CompareTag("Wall"))
+        else
         {
-            Destroy(gameObject);
         }
+
+        Destroy(gameObject);
     }
+
+    if (other.CompareTag("Wall"))
+    {
+        Destroy(gameObject);
+    }
+}
 }

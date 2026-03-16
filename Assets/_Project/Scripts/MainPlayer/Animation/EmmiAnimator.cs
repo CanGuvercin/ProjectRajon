@@ -38,7 +38,6 @@ public class EmmiAnimator : MonoBehaviour
     // -------------------------------------------------------------------------
     public void SetMoving(bool v)
 {
-    Debug.Log($"SetMoving: {v}");
     _animator.SetBool(ParamIsMoving, v);
 }
     public void SetRunning(bool v)   => _animator.SetBool(ParamIsRunning, v);

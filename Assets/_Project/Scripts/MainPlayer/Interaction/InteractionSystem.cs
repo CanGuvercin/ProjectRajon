@@ -24,7 +24,6 @@ public class InteractionSystem : MonoBehaviour
     private void Update()
     {
         CurrentTarget = FindClosest();
-         Debug.Log($"CurrentTarget: {CurrentTarget}, Center: {Center}");
     }
 
     private IInteractable FindClosest()
@@ -34,8 +33,6 @@ public class InteractionSystem : MonoBehaviour
 
         int count = Physics2D.OverlapCircleNonAlloc(
             Center, _pickupRadius, _buffer, _interactableLayer);
-            Debug.Log($"OverlapCircle buldu: {count} obje");
-
         for (int i = 0; i < count; i++)
         {
             var interactable = _buffer[i].GetComponent<IInteractable>();
