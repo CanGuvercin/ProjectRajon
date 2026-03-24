@@ -29,6 +29,7 @@ public class WeaponController : MonoBehaviour
     private bool       _isBeltCharging;
     private float      _beltChargeTimer;
     private int        _beltChargeLevel;
+    private int        _pendingBeltLevel;  // Animation Event için bekleyen level
     private bool       _revolverOnGround;
     private bool       _isSwitching;
 
@@ -230,8 +231,12 @@ public class WeaponController : MonoBehaviour
         
         _beltChargeTimer += Time.deltaTime;
         
-        // Kademe hesapla (0.5s = 1, 1.0s = 2, 1.5s = 3)
-        int newLevel = Mathf.Clamp(Mathf.FloorToInt(_beltChargeTimer / _chargePerLevel) + 1, 1, 3);
+        // FIX: +1 kaldırıldı - artık tamamlanan kademe sayısı doğru hesaplanıyor
+        // t=0.0-0.49s → level 0 (1. kademe dolmuyor)
+        // t=0.5-0.99s → level 1 (1. kademe doldu)
+        // t=1.0-1.49s → level 2 (2. kademe doldu)
+        // t=1.5s+     → level 3 (full şarj)
+        int newLevel = Mathf.Clamp(Mathf.FloorToInt(_beltChargeTimer / _chargePerLevel), 0, 3);
         
         if (newLevel != _beltChargeLevel)
         {
@@ -254,14 +259,28 @@ public class WeaponController : MonoBehaviour
         
         if (level == 0)
         {
-            // Şarj yoksa Light Attack
+            // Şarj yoksa veya ilk kademe dolmadan bırakıldıysa Light Attack
             _animator.PlayLightAttack();
         }
         else
         {
-            // Şarj seviyesine göre Heavy Attack
+            // FIX: Spawn'u hemen yapmıyoruz, Animation Event'e bırakıyoruz
+            _pendingBeltLevel = level;
             _animator.PlayHeavyAttack();
-            SpawnBeltWhip(level);
+            // SpawnBeltWhip artık OnBeltWhipFrame() Animation Event'inden çağrılacak
+        }
+    }
+
+    /// <summary>
+    /// Animation Event'ten çağrılır - Belt Heavy Attack animasyonunun
+    /// whip frame'ine bu event'i ekle (Emmi kolu uzattığı an)
+    /// </summary>
+    public void OnBeltWhipFrame()
+    {
+        if (_pendingBeltLevel > 0)
+        {
+            SpawnBeltWhip(_pendingBeltLevel);
+            _pendingBeltLevel = 0;
         }
     }
 

@@ -3,7 +3,7 @@ using UnityEngine;
 /// <summary>
 /// RAJON — BeltChargeUI
 /// Belt seçiliyken Emmi'nin altında görünen 3 slotlu şarj barı.
-/// Her slot soldan sağa dolar.
+/// Her slot soldan sağa ease-out curve ile dolar (sonuna doğru yavaşlar).
 /// </summary>
 public class BeltChargeUI : MonoBehaviour
 {
@@ -20,6 +20,10 @@ public class BeltChargeUI : MonoBehaviour
     [Header("Referanslar")]
     [SerializeField] private WeaponController _weapon;
     [SerializeField] private Vector3 _offset = new Vector3(0, -0.5f, 0);
+
+    [Header("Easing Ayarları")]
+    [Tooltip("Ease-out gücü. 2 = quadratic, 3 = cubic (daha dramatik yavaşlama)")]
+    [SerializeField] private float _easePower = 2.5f;
 
     private Transform _target;
     private Vector3 _fillerOriginalScale;
@@ -66,13 +70,29 @@ public class BeltChargeUI : MonoBehaviour
         // Slot 2: 0.33 - 0.66
         // Slot 3: 0.66 - 1.00
         
-        float slot1Fill = Mathf.Clamp01(chargeRatio / 0.333f);
-        float slot2Fill = Mathf.Clamp01((chargeRatio - 0.333f) / 0.333f);
-        float slot3Fill = Mathf.Clamp01((chargeRatio - 0.666f) / 0.334f);
+        float slot1Linear = Mathf.Clamp01(chargeRatio / 0.333f);
+        float slot2Linear = Mathf.Clamp01((chargeRatio - 0.333f) / 0.333f);
+        float slot3Linear = Mathf.Clamp01((chargeRatio - 0.666f) / 0.334f);
+
+        // Ease-out curve uygula: başta hızlı, sona doğru yavaşlar
+        // Bu "gerçekten şarj ediliyor, dolmak üzere" hissi verir
+        float slot1Fill = EaseOutPow(slot1Linear);
+        float slot2Fill = EaseOutPow(slot2Linear);
+        float slot3Fill = EaseOutPow(slot3Linear);
 
         SetFillerScale(_slot1Filler, slot1Fill);
         SetFillerScale(_slot2Filler, slot2Fill);
         SetFillerScale(_slot3Filler, slot3Fill);
+    }
+
+    /// <summary>
+    /// Ease-Out Power curve: 1 - (1 - t)^power
+    /// Başta hızlı dolar, sona doğru yavaşlar.
+    /// power=2 → quadratic, power=3 → cubic (daha dramatik)
+    /// </summary>
+    private float EaseOutPow(float t)
+    {
+        return 1f - Mathf.Pow(1f - t, _easePower);
     }
 
     private void SetFillerScale(Transform filler, float fillAmount)
