@@ -331,14 +331,14 @@ public class WeaponController : MonoBehaviour
 
     private IEnumerator ReloadRoutine(Action onComplete)
     {
-        if (_ammoUI != null)
+        if (_ammoUI != null && _ammoUI.gameObject.activeInHierarchy)
             _ammoUI.UseMagazine();
         
         _animator.PlayReload();
         
         yield return new WaitForSeconds(_revolverReloadTime * 0.4f);
         
-        if (_ammoUI != null)
+        if (_ammoUI != null && _ammoUI.gameObject.activeInHierarchy)
             _ammoUI.PlayReloadAnimation(_revolverMaxAmmo);
         
         yield return new WaitForSeconds(_revolverReloadTime * 0.6f);

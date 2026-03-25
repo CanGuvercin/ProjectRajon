@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 6644877886404477750}
   - component: {fileID: 7665228975486124474}
   - component: {fileID: 8897351157608883350}
+  - component: {fileID: 2089217606652648626}
   m_Layer: 0
   m_Name: BeltWhip_Lv3
   m_TagString: Untagged
@@ -118,10 +119,10 @@ BoxCollider2D:
   m_IsTrigger: 1
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: 0.49993753, y: -0.13761014}
+  m_Offset: {x: 2.7503014, y: -0.00080406666}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0, y: 0.5}
+    pivot: {x: 0, y: 0.36}
     oldSize: {x: 5.5, y: 1}
     newSize: {x: 5.5, y: 1}
     adaptiveTilingThreshold: 0.5
@@ -129,7 +130,7 @@ BoxCollider2D:
     adaptiveTiling: 0
   m_AutoTiling: 0
   serializedVersion: 2
-  m_Size: {x: 0.99987507, y: 0.09422338}
+  m_Size: {x: 5.5022764, y: 0.09635544}
   m_EdgeRadius: 0
 --- !u!114 &8897351157608883350
 MonoBehaviour:
@@ -146,4 +147,31 @@ MonoBehaviour:
   _damage: 15
   _enemyLayer:
     serializedVersion: 2
+    m_Bits: 1024
+--- !u!50 &2089217606652648626
+Rigidbody2D:
+  serializedVersion: 4
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2511586259655156823}
+  m_BodyType: 1
+  m_Simulated: 1
+  m_UseFullKinematicContacts: 0
+  m_UseAutoMass: 0
+  m_Mass: 1
+  m_LinearDrag: 0
+  m_AngularDrag: 0.05
+  m_GravityScale: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
     m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_Interpolate: 0
+  m_SleepingMode: 1
+  m_CollisionDetection: 0
+  m_Constraints: 0

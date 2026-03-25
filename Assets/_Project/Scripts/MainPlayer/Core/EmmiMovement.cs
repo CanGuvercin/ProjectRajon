@@ -24,6 +24,7 @@ public class EmmiMovement : MonoBehaviour
     // -------------------------------------------------------------------------
     private bool  _isRunning;
     private bool  _isDodging;
+    private bool  _isAttackLocked;
     private float _dodgeCooldownTimer;
     private Action _dodgeCompleteCallback;
 
@@ -48,7 +49,8 @@ public class EmmiMovement : MonoBehaviour
     // -------------------------------------------------------------------------
     public void Move(Vector2 input)
     {
-        if (_isDodging)
+        // Dodge veya attack lock aktifse hareket yok
+        if (_isDodging || _isAttackLocked)
         {
             _rb.velocity = Vector2.zero;
             return;
@@ -65,6 +67,20 @@ public class EmmiMovement : MonoBehaviour
     {
         _isRunning = isRunning;
     }
+
+    // -------------------------------------------------------------------------
+    // Attack Lock — Belt charge, heavy attack vs. sırasında hareket engellenir
+    // -------------------------------------------------------------------------
+    public void SetAttackLocked(bool locked)
+    {
+        _isAttackLocked = locked;
+        if (locked)
+        {
+            _rb.velocity = Vector2.zero;
+        }
+    }
+
+    public bool IsAttackLocked => _isAttackLocked;
 
     // -------------------------------------------------------------------------
     // Dodge Başlat — PlayerController çağırır
@@ -103,4 +119,4 @@ public class EmmiMovement : MonoBehaviour
     public bool IsDodging         => _isDodging;
     public bool IsDodgeOnCooldown => _dodgeCooldownTimer > 0f;
     public bool IsMoving          => _rb.velocity.sqrMagnitude > 0.01f;
-}
+}//

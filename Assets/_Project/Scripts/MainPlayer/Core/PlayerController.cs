@@ -122,23 +122,62 @@ public class PlayerController : MonoBehaviour
     }
 
     private void OnLightAttack(InputAction.CallbackContext ctx)
-{
-    if (!CanAttack()) return;
-    IsLightAttacking = true;
-    bool isMoving = _moveInput.sqrMagnitude > 0.01f;
-    _weapon.LightAttack(isMoving, () => IsLightAttacking = false);
-}
+    {
+        // Zaten light attack yapıyorsa spam'i engelle
+        if (IsLightAttacking) return;
+        if (!CanAttack()) return;
+        
+        IsLightAttacking = true;
+        bool isMoving = _moveInput.sqrMagnitude > 0.01f;
+        _weapon.LightAttack(isMoving, () => IsLightAttacking = false);
+    }
 
     private void OnHeavyAttack(InputAction.CallbackContext ctx)
     {
         if (!CanAttack()) return;
         IsHeavyAttacking = true;
+        
+        // Belt charging başlıyorsa hareketi kilitle
+        if (_weapon.CurrentWeapon == WeaponType.Belt)
+        {
+            _movement.SetAttackLocked(true);
+        }
+        
         _weapon.HeavyAttack(() => IsHeavyAttacking = false);
     }
 
+    private Coroutine _beltUnlockCoroutine;
+
     private void OnHeavyAttackReleased(InputAction.CallbackContext ctx)
     {
-        if (_weapon.IsBeltCharging) _weapon.ReleaseBelt();
+        if (_weapon.IsBeltCharging)
+        {
+            _weapon.ReleaseBelt();
+            // Lock'u hemen kaldırma, saldırı animasyonu bitene kadar tut
+            if (_beltUnlockCoroutine != null)
+                StopCoroutine(_beltUnlockCoroutine);
+            _beltUnlockCoroutine = StartCoroutine(UnlockAfterBeltAttack());
+        }
+    }
+
+    private System.Collections.IEnumerator UnlockAfterBeltAttack()
+    {
+        yield return new WaitForSeconds(1.2f);
+        _movement.SetAttackLocked(false);
+        _beltUnlockCoroutine = null;
+    }
+
+    /// <summary>
+    /// Herhangi bir durumda lock takılırsa güvenlik için çağır
+    /// </summary>
+    private void ForceUnlockMovement()
+    {
+        if (_beltUnlockCoroutine != null)
+        {
+            StopCoroutine(_beltUnlockCoroutine);
+            _beltUnlockCoroutine = null;
+        }
+        _movement.SetAttackLocked(false);
     }
 
     private void OnReload(InputAction.CallbackContext ctx)
@@ -157,6 +196,10 @@ public class PlayerController : MonoBehaviour
     private void OnWeaponSelect(WeaponType type)
     {
         if (!CanAct() || IsWeaponSwitching) return;
+        
+        // Silah değiştirirken takılı lock'u kaldır
+        ForceUnlockMovement();
+        
         _weapon.SwitchWeapon(type);
     }
 
@@ -219,6 +262,9 @@ public class PlayerController : MonoBehaviour
         // Heavy Attack → her zaman durur
         if (IsHeavyAttacking) return false;
         
+        // Belt charging sırasında hareket etme
+        if (_weapon.IsBeltCharging) return false;
+        
         // Light Attack sırasında Belt hariç herkes hareket edebilir
         if (IsLightAttacking)
         {
@@ -237,12 +283,17 @@ public class PlayerController : MonoBehaviour
         IsLightAttacking = false;
         IsHeavyAttacking = false;
         IsReloading = false;
+        
+        // Hit alınca tüm lock'ları kaldır
+        ForceUnlockMovement();
+        
         _animator.PlayHit();
     }
 
     public void OnDeath()
     {
         IsDead = true;
+        ForceUnlockMovement();
         _animator.PlayDeath();
     }
 }

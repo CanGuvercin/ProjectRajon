@@ -12674,6 +12674,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 40876247526068314, guid: 24b988db0b900c8409251d66b7dcd848, type: 3}
+      propertyPath: _maxHP
+      value: 3000
+      objectReference: {fileID: 0}
     - target: {fileID: 1679800499677637506, guid: 24b988db0b900c8409251d66b7dcd848, type: 3}
       propertyPath: _target
       value: 
@@ -12862,6 +12866,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 5229022164089368643}
     - target: {fileID: 3367876588307967039, guid: 8542c0b87e9804544af9cc3a07762f08, type: 3}
+      propertyPath: _chargePerLevel
+      value: 0.85
+      objectReference: {fileID: 0}
+    - target: {fileID: 3367876588307967039, guid: 8542c0b87e9804544af9cc3a07762f08, type: 3}
       propertyPath: _beltWhipPrefabs.Array.data[0]
       value: 
       objectReference: {fileID: 7622280367889615078, guid: 6e9645d66c2858e49bf6af7e41dff615, type: 3}
@@ -12998,6 +13006,7 @@ MonoBehaviour:
   _slot3Filler: {fileID: 1007961450}
   _weapon: {fileID: 2053814121}
   _offset: {x: 0, y: -0.5, z: 0}
+  _easePower: 2.5
 --- !u!1 &6290753910368770942 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1583906572509159228, guid: 6384cc9800eb85c4cbfa80814ad638cd, type: 3}
