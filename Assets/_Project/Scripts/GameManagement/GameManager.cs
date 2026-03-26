@@ -118,8 +118,8 @@ public class GameManager : MonoBehaviour
         
         if (health != null)
         {
-            Data.currentHP = health.CurrentHP;
-            Data.maxHP = health.MaxHP;
+            Data.currentHP = health.Current;
+            Data.maxHP = health.Max;
         }
         
         if (stamina != null)

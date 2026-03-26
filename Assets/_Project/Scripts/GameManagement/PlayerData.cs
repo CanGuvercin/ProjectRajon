@@ -12,8 +12,8 @@ public class PlayerData
     // -------------------------------------------------------------------------
     // Temel Statlar
     // -------------------------------------------------------------------------
-    public int   currentHP;
-    public int   maxHP;
+    public float currentHP;
+public float maxHP;
     public float currentStamina;
     public float maxStamina;
     
